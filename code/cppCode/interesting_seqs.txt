@@ -1,0 +1,11 @@
+Text file of interesting (degree) seqs useful to test our functions on
+
+{0,1,2,3}
+{0,3,5,8}
+{0,2,3,4,5,13,21,44}
+
+{0,15,55,63,64,70} failed ^^^
+{0,7,97,98,104,105} fails
+{0,27,77,90,104,105} failed ^^^
+All 3 of the above are ruled out by Erman 1
+all 3 of these contain a sequence of 2 consecutive ints and are all "right heavy" or "starboard heavy" in the pure betti diagram

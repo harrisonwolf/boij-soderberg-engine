@@ -1,0 +1,107 @@
+--CODE ; RUN ON STARTUP
+
+loadPackage "BoijSoederberg"
+--writing a function to find all of the degree sequences in codimension c (c is basically gonna go from 3 to 5 for our purposes) with biggest number MAXDEG whose virtual betti tables violate BEH or LLBC
+--should take two args, c and d, and return a list of degree sequences (lists)
+c = 3
+MAXDEG = 10
+
+--genDegSeqs takes a codimension c and max degree d and generates all possible degree sequences with those conditions
+genDegSeqs = (c,d) -> (
+    return subsets(toList(1..d),c)/(i-> {0}|i)
+    )
+
+testBEH = (B) -> ( --returns true if it is a bad guy
+    --B is a list of betti numbers
+    c = length(B)-1;
+    flag = false;
+    for i from 0 to c do (
+	if B_i < binomial(c,i) then flag = true;
+	);
+    return flag;
+    )
+
+--testBEH({1,2,3,1})
+
+testLLBC = (B) -> (--returns true if B is bad guy
+    --B is list of betti numbers
+    c = length(B)-1;
+    num = 2^c * 1.5;
+    return sum B < num;
+    )
+
+--testLLBC({1,3,3,1})
+
+--TODO: make find function that takes given list of degree seqs instead of generating them
+findBadOnes = (c,d) -> (
+    possibles = genDegSeqs(c,d);
+    badOnes = select(possibles, i-> (
+	B = pureBetti i;
+        (testLLBC(B))
+	or
+	(testBEH(B))
+    )
+    );
+    return badOnes;
+    )
+
+--sieve(D) takes a list of degree sequences and rinses out the ones that are multiples of another
+-- ex { {0,2,3,5}, {0.3,4,5}, {0,4,6,10} } -> { {0,2,3,5}, {0,3,4,5} }
+
+--method:
+--create a hash table that maps each degseq to true or false
+--prepopulate everything to false
+--go through the list; for each degree sequence, check the hash table if you've seen it before
+--if no, add it to the return list, then mark it and all multiples of it as seen in the hash table
+--if yes, just continue to the next one in the list
+
+sieve = (D) -> (
+    seen = new MutableHashTable from {};
+    for d in D do (
+	seen#d = 0; --prepopulate the hash table
+	);
+    retval = select(D, i-> (
+	flag := seen#1 == 0; --set flag here so can return it at the end if we change seen#i
+	if seen#i == 0 then ( --haven't seen it yet, do the stuff
+	    for j in (1..length(i)-1) do ( --remember i is the current degree sequence we're working w
+		seen#(j*i) = 1;
+	    );
+	flag
+	)
+    );
+    retval
+    )
+
+relPrimes = select(badOnes, i-> (
+    flag = false;
+    temp = subsets(i,2);
+    if any(temp, j-> gcd(j_0,j_1) == 1) then flag = true;
+    flag
+    )
+    )
+
+for i in relPrimes do (print i)
+
+--TESTS
+
+badOnes = findBadOnes(3,100)
+for i in badOnes do (print i)
+
+--badOnes = findBadOnes(3,300)
+--for i in badOnes do (print i)
+
+--badOnes = findBadOnes(4,60)
+--for i in badOnes do (print i)
+
+--badOnes = findBadOnes(5,50)
+--for i in badOnes do (print i)
+
+--badOnes = findBadOnes(6,30)
+--for i in badOnes do (print i)
+
+--badOnes = findBadOnes(7,25)
+--for i in badOnes do (print i)
+
+--badOnes = findBadOnes(12,20)
+--for i in badOnes do (print i)
+--badOnes/pureBetti

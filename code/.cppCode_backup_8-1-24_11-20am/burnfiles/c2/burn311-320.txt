@@ -1,0 +1,8 @@
+Bad ones for codimension c = 2 up to max degree d = 320
+{0,156,312}
+{0,157,314}
+{0,158,316}
+{0,159,318}
+{0,160,320}
+gcd_rinsed ones: 
+-1

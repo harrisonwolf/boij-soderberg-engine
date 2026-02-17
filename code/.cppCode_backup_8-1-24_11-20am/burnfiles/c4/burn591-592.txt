@@ -1,0 +1,5 @@
+Bad ones for codimension c = 4 up to max degree d = 592
+{0,111,481,555,592}
+{0,148,296,444,592}
+gcd_rinsed ones: 
+-1

@@ -1,0 +1,7 @@
+Bad ones for codimension c = 6 up to max degree d = 26
+{0,1,21,22,23,24,25}
+{0,6,19,20,21,25,26}
+gcd_rinsed ones: 
+{0,1,21,22,23,24,25}
+{0,6,19,20,21,25,26}
+-1

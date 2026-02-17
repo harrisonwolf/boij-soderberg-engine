@@ -1,0 +1,5 @@
+Bad ones for codimension c = 8 up to max degree d = 39
+{0,3,6,24,27,30,33,36,39}
+{0,7,25,28,29,32,33,36,39}
+gcd_rinsed ones: 
+-1
