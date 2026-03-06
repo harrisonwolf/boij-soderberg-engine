@@ -123,6 +123,22 @@ touch /tmp/unique_demo.txt
 ./build/bin/tell_which_violations /tmp/unique_demo.txt
 ```
 
+## Interview Demo
+
+For an 8-12 minute performance-first interview walkthrough:
+
+```bash
+bash scripts/interview_demo.sh
+```
+
+Fallback profile for slower machines:
+
+```bash
+bash scripts/interview_demo.sh --fallback
+```
+
+Runbook and narration prompts: [`docs/interview_demo.md`](docs/interview_demo.md)
+
 ## Executable Reference
 
 ### `bad_one_generator`
