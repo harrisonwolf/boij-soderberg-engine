@@ -100,9 +100,15 @@ if [[ -s "${tell_stderr_log}" ]]; then
 fi
 
 echo
-echo "== Step 6: Macaulay2 baseline evidence from repo history =="
-echo "Narration: Historical M2 runs in this repo show longer runtime and heap pressure."
-rg -n "findBadOnes\\(3,400\\)|Too many heap sections" research/macaulay2/badOneFinder.m2
+echo "== Step 6: Macaulay2 comparison =="
+echo "Narration: Compare the same workload against a live M2 implementation when M2 is installed."
+if command -v M2 >/dev/null 2>&1 || command -v macaulay2 >/dev/null 2>&1; then
+  bash scripts/benchmark_against_m2.sh 3 40 1
+else
+  echo "M2 not installed on this machine; skipping live benchmark."
+  echo "Fallback historical note (not current benchmark evidence):"
+  rg -n "findBadOnes\\(3,400\\)|Too many heap sections" research/macaulay2/badOneFinder.m2
+fi
 
 echo
 echo "== Artifacts =="

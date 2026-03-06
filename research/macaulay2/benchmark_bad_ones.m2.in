@@ -1,0 +1,152 @@
+-- Standalone Macaulay2 benchmark for the bad-one search.
+-- This mirrors the C++ flow without relying on the historical BoijSoederberg package.
+
+CODIM = __CODIM__;
+MAXDEG = __MAXDEG__;
+LOWBOUND = __LOWBOUND__;
+
+binomM2 = (n,k) -> (
+    if k < 0 or k > n then 0
+    else if k == 0 or k == n then 1
+    else binomM2(n-1,k-1) + binomM2(n-1,k)
+    );
+
+genDegSeqsCpp = (c,d,lowbound) -> (
+    lb := lowbound;
+    if lb < 1 then lb = 1;
+    select(subsets(toList(1..d), c), seq -> last(seq) >= lb) / (seq -> {0} | seq)
+    );
+
+replaceAt = (L, idx, val) -> (
+    apply(toList(0..(#L - 1)), i -> if i == idx then val else L#i)
+    );
+
+pureBettiCpp = (D) -> (
+    c := #D - 1;
+    fractions := {{1,1}};
+    for i from 1 to c do (
+        num := 1;
+        den := 1;
+        for j from 1 to c do (
+            if j =!= i then (
+                num = num * (D#j);
+                den = den * abs((D#j) - (D#i));
+                );
+            );
+        g := gcd(num, den);
+        fractions = append(fractions, {(num / g), (den / g)});
+        );
+    L := 1;
+    for frac in fractions do (
+        L = lcm(L, frac#1);
+        );
+    apply(fractions, frac -> (L * (frac#0)) / (frac#1))
+    );
+
+testConjsCpp = (D) -> (
+    c := #D - 1;
+    pis := {{ {1,1} }};
+    for i from 1 to c do (
+        currPi := {};
+        for j from 1 to c do (
+            if i =!= j then (
+                currPi = append(currPi, {(D#j), abs((D#j) - (D#i))});
+                );
+            );
+        pis = append(pis, currPi);
+        );
+
+    for i from 1 to c do (
+        currPi := pis#i;
+        for pIndex from 0 to (#(pis#i) - 1) do (
+            for qIndex from 0 to (#(pis#i) - 1) do (
+                p := currPi#pIndex;
+                q := currPi#qIndex;
+                commonDiv := gcd(p#0, q#1);
+                if commonDiv =!= 1 then (
+                    if pIndex == qIndex then (
+                        currPi = replaceAt(currPi, pIndex, {(p#0) // commonDiv, (q#1) // commonDiv});
+                        )
+                    else (
+                        currPi = replaceAt(currPi, pIndex, {(p#0) // commonDiv, p#1});
+                        currPi = replaceAt(currPi, qIndex, {q#0, (q#1) // commonDiv});
+                        );
+                    );
+                );
+            );
+        pis = replaceAt(pis, i, currPi);
+        );
+
+    target := binomM2(c, c // 2);
+    L := 1;
+    LVec := {1};
+    for i from 1 to c do (
+        currL := 1;
+        for j from 0 to (c - 2) do (
+            currL = currL * (((pis#i)#j)#1);
+            if currL >= target then return true;
+            );
+        LVec = append(LVec, currL);
+        );
+
+    scan(LVec, l -> (
+        L = lcm(L, l);
+        if L >= target then return true;
+        ));
+
+    for i from 1 to c do (
+        miniL := L;
+        currPi := pis#i;
+        for qIndex from 0 to (#currPi - 1) do (
+            q := currPi#qIndex;
+            commonDiv := gcd(miniL, q#1);
+            if commonDiv =!= 1 then (
+                miniL = miniL // commonDiv;
+                currPi = replaceAt(currPi, qIndex, {q#0, (q#1) // commonDiv});
+                );
+            );
+        q0 := currPi#0;
+        currPi = replaceAt(currPi, 0, {(q0#0) * miniL, q0#1});
+        pis = replaceAt(pis, i, currPi);
+        );
+    pi0 := pis#0;
+    pis = replaceAt(pis, 0, {{((pi0#0)#0) * L, (pi0#0)#1}});
+
+    totalSum := L;
+    for i from 1 to c do (
+        currProd := 1;
+        currTarget := binomM2(c, i);
+        for j from 0 to (c - 2) do (
+            currProd = currProd * ((((pis#i)#j)#0));
+            );
+        if currProd < currTarget then return false;
+        totalSum = totalSum + currProd;
+        );
+
+    totalSum >= ((2^c) * 3 / 2)
+    );
+
+gcdRinseCpp = (seqs) -> (
+    select(seqs, seq -> gcd(seq#(#seq - 1), seq#(#seq - 2)) == 1)
+    );
+
+genSecs := cpuTime();
+possibleSeqs = genDegSeqsCpp(CODIM, MAXDEG, LOWBOUND);
+genSecs = cpuTime() - genSecs;
+testStartSecs := cpuTime();
+badOnes := select(possibleSeqs, seq -> not testConjsCpp(seq));
+rinsedBadOnes := gcdRinseCpp(badOnes);
+totalSecs := genSecs + (cpuTime() - testStartSecs);
+
+<<"Generated " << #possibleSeqs << " degree sequences in " << toString(genSecs) << " seconds" << endl;
+<<"Tested BEH and LLBC on " << #possibleSeqs << " degree sequences" << endl;
+<<"Finished all tests in " << toString(totalSecs) << " seconds" << endl;
+<<"badOnesList:" << endl;
+for seq in badOnes do (
+    << toString(seq) << endl;
+    );
+<<"gcdRinsedList:" << endl;
+for seq in rinsedBadOnes do (
+    << toString(seq) << endl;
+    );
+exit 0

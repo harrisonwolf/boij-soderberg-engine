@@ -139,6 +139,14 @@ bash scripts/interview_demo.sh --fallback
 
 Runbook and narration prompts: [`docs/interview_demo.md`](docs/interview_demo.md)
 
+For a direct C++ vs Macaulay2 comparison on the same search parameters:
+
+```bash
+bash scripts/benchmark_against_m2.sh 3 40 1
+```
+
+This requires `M2` (or `macaulay2`) on `PATH`. The benchmark uses the standalone Macaulay2 template in `research/macaulay2/benchmark_bad_ones.m2.in`.
+
 ## Executable Reference
 
 ### `bad_one_generator`

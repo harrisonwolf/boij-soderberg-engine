@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BIN_DIR="${REPO_ROOT}/build/bin"
+M2_TEMPLATE="${REPO_ROOT}/research/macaulay2/benchmark_bad_ones.m2.in"
+
+if [[ $# -lt 2 || $# -gt 3 ]]; then
+  echo "Usage: bash scripts/benchmark_against_m2.sh <codimension> <maxdeg> [lowbound]" >&2
+  exit 1
+fi
+
+C="$1"
+D="$2"
+L="${3:-1}"
+
+if [[ ! -x "${BIN_DIR}/bad_one_generator" ]]; then
+  echo "[build] Missing C++ binary. Running make..."
+  make -C "${REPO_ROOT}"
+fi
+
+M2_BIN="$(command -v M2 || command -v macaulay2 || true)"
+if [[ -z "${M2_BIN}" ]]; then
+  echo "Macaulay2 is not installed. Expected \`M2\` or \`macaulay2\` on PATH." >&2
+  exit 2
+fi
+
+cpp_out="$(mktemp)"
+cpp_log="$(mktemp)"
+m2_script="$(mktemp --suffix=.m2)"
+m2_log="$(mktemp)"
+cpp_bad_raw="$(mktemp)"
+cpp_rinsed="$(mktemp)"
+m2_bad_raw="$(mktemp)"
+m2_rinsed="$(mktemp)"
+cpp_summary="$(mktemp)"
+m2_summary="$(mktemp)"
+cpp_time_log="$(mktemp)"
+m2_time_log="$(mktemp)"
+
+GREEN=$'\033[32m'
+RED=$'\033[31m'
+RESET=$'\033[0m'
+
+cleanup() {
+  rm -f "${m2_script}"
+}
+trap cleanup EXIT
+
+elapsed_to_seconds() {
+  awk -v t="$1" '
+    BEGIN {
+      n = split(t, a, ":");
+      if (n == 3) printf "%.6f\n", (a[1] * 3600) + (a[2] * 60) + a[3];
+      else if (n == 2) printf "%.6f\n", (a[1] * 60) + a[2];
+      else printf "%.6f\n", a[1];
+    }
+  '
+}
+
+extract_after_equals() {
+  sed -n "s/.*${1}=\\([^ ]*\\).*/\\1/p"
+}
+
+extract_time_seconds() {
+  awk '
+    match($0, /in ([0-9.]+) seconds/, a) { print a[1] }
+  ' "$1"
+}
+
+color_cell() {
+  local value="$1"
+  local winner="$2"
+  local padded
+  padded="$(printf '%-22s' "${value}")"
+  if [[ "$winner" == "1" ]]; then
+    printf "%s%s%s" "${GREEN}" "${padded}" "${RESET}"
+  else
+    printf "%s%s%s" "${RED}" "${padded}" "${RESET}"
+  fi
+}
+
+print_row() {
+  local label="$1"
+  local m2_display="$2"
+  local cpp_display="$3"
+  local m2_value="$4"
+  local cpp_value="$5"
+  local lower_is_better="${6:-1}"
+  local cpp_wins=0
+  local m2_wins=0
+
+  if awk -v a="${m2_value}" -v b="${cpp_value}" -v lib="${lower_is_better}" 'BEGIN {
+      if (a == b) exit 2;
+      if (lib == 1) exit (a < b ? 0 : 1);
+      exit (a > b ? 0 : 1);
+    }'; then
+    m2_wins=1
+  else
+    case $? in
+      1) cpp_wins=1 ;;
+      2) cpp_wins=1; m2_wins=1 ;;
+    esac
+  fi
+
+  printf "| %-28s | %b | %b |\n" \
+    "${label}" \
+    "$(color_cell "${m2_display}" "${m2_wins}")" \
+    "$(color_cell "${cpp_display}" "${cpp_wins}")"
+}
+
+sed \
+  -e "s/__CODIM__/${C}/g" \
+  -e "s/__MAXDEG__/${D}/g" \
+  -e "s/__LOWBOUND__/${L}/g" \
+  "${M2_TEMPLATE}" > "${m2_script}"
+
+echo "== C++ benchmark =="
+/usr/bin/time -f 'elapsed=%E cpu=%P maxrss_kb=%M' \
+  "${BIN_DIR}/bad_one_generator" "${cpp_out}" "${C}" "${D}" "${L}" \
+  > "${cpp_log}" 2> "${cpp_time_log}"
+cat "${cpp_time_log}"
+awk 'BEGIN{mode=0} /^Bad ones for /{mode=1;next} /^gcd_rinsed ones: /{exit} mode==1 && /^\{/' "${cpp_out}" > "${cpp_bad_raw}"
+"${BIN_DIR}/remove_duplicates" "${cpp_bad_raw}" "${cpp_rinsed}" > /dev/null
+awk '
+  /Generated/ { print; next }
+  /Tested BEH and LLBC/ { print; next }
+  /Finished all tests/ { print; next }
+' "${cpp_log}" > "${cpp_summary}"
+cat "${cpp_summary}"
+awk '/^\{/' "${cpp_rinsed}"
+
+echo
+echo "== Macaulay2 benchmark =="
+/usr/bin/time -f 'elapsed=%E cpu=%P maxrss_kb=%M' \
+  "${M2_BIN}" --script "${m2_script}" \
+  > "${m2_log}" 2> "${m2_time_log}"
+cat "${m2_time_log}"
+awk 'BEGIN{mode=0} /^badOnesList:/{mode=1;next} /^gcdRinsedList:/{mode=0} mode==1 && /^\{/{gsub(/ /,""); print}' "${m2_log}" > "${m2_bad_raw}"
+"${BIN_DIR}/remove_duplicates" "${m2_bad_raw}" "${m2_rinsed}" > /dev/null
+awk '
+  /Generated .* degree sequences in .* seconds/ { print; next }
+  /Tested BEH and LLBC on .* degree sequences/ { print; next }
+  /Finished all tests in .* seconds/ { print; next }
+' "${m2_log}" > "${m2_summary}"
+cat "${m2_summary}"
+awk '/^\{/' "${m2_rinsed}"
+
+echo
+cpp_elapsed="$(extract_after_equals elapsed < "${cpp_time_log}")"
+cpp_cpu="$(extract_after_equals cpu < "${cpp_time_log}" | tr -d '%')"
+cpp_mem="$(extract_after_equals maxrss_kb < "${cpp_time_log}")"
+m2_elapsed="$(extract_after_equals elapsed < "${m2_time_log}")"
+m2_cpu="$(extract_after_equals cpu < "${m2_time_log}" | tr -d '%')"
+m2_mem="$(extract_after_equals maxrss_kb < "${m2_time_log}")"
+
+cpp_gen_secs="$(extract_time_seconds "${cpp_summary}" | sed -n '1p')"
+cpp_total_secs="$(extract_time_seconds "${cpp_summary}" | sed -n '2p')"
+cpp_test_secs="$(awk -v total="${cpp_total_secs}" -v gen="${cpp_gen_secs}" 'BEGIN { printf "%.6f", total - gen }')"
+m2_gen_secs="$(extract_time_seconds "${m2_summary}" | sed -n '1p')"
+m2_total_secs="$(extract_time_seconds "${m2_summary}" | sed -n '2p')"
+m2_test_secs="$(awk -v total="${m2_total_secs}" -v gen="${m2_gen_secs}" 'BEGIN { printf "%.6f", total - gen }')"
+
+cpp_elapsed_secs="$(elapsed_to_seconds "${cpp_elapsed}")"
+m2_elapsed_secs="$(elapsed_to_seconds "${m2_elapsed}")"
+
+echo "Comparison"
+printf "| %-28s | %-22s | %-22s |\n" "Metric" "M2" "C++"
+printf "|-%-28s-|-%-22s-|-%-22s-|\n" "$(printf '%.0s-' {1..28})" "$(printf '%.0s-' {1..22})" "$(printf '%.0s-' {1..22})"
+print_row "Total time elapsed" "${m2_elapsed}" "${cpp_elapsed}" "${m2_elapsed_secs}" "${cpp_elapsed_secs}"
+print_row "CPU usage" "${m2_cpu}%" "${cpp_cpu}%" "${m2_cpu}" "${cpp_cpu}"
+print_row "Memory usage" "${m2_mem} KB" "${cpp_mem} KB" "${m2_mem}" "${cpp_mem}"
+print_row "Degree-sequence time" "${m2_gen_secs}s" "${cpp_gen_secs}s" "${m2_gen_secs}" "${cpp_gen_secs}"
+print_row "Conjecture-test time" "${m2_test_secs}s" "${cpp_test_secs}s" "${m2_test_secs}" "${cpp_test_secs}"
