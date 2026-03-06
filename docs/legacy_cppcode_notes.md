@@ -1,3 +1,6 @@
+Legacy note from the pre-migration `code/cppCode` layout.
+Current build location is repository root (`make`) with binaries in `build/bin/`.
+
 Everything is compiled with make
 To compile only a specific executable, run "make [executable name]"; eg "make bad_one_generator"
 

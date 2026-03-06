@@ -1,0 +1,31 @@
+# Build output
+/build/
+/dist/
+
+# C/C++ compilation artifacts
+*.o
+*.obj
+*.gch
+*.a
+*.so
+*.dylib
+*.dll
+
+# Generic binaries / run outputs
+*.out
+
+# IDE / editor backups
+*~
+\#*\#
+.\#*
+*.swp
+*.swo
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Keep archived historical artifacts tracked
+!research/snapshots/**
+!research/archive/generated/**
+!research/archive/editor-backups/**
