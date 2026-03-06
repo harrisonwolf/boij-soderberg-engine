@@ -58,6 +58,21 @@ elapsed_to_seconds() {
   '
 }
 
+format_elapsed_precise() {
+  awk -v total="$1" '
+    BEGIN {
+      hours = int(total / 3600);
+      minutes = int((total - (hours * 3600)) / 60);
+      seconds = total - (hours * 3600) - (minutes * 60);
+      if (hours > 0) {
+        printf "%d:%02d:%07.4f", hours, minutes, seconds;
+      } else {
+        printf "%d:%07.4f", minutes, seconds;
+      }
+    }
+  '
+}
+
 extract_after_equals() {
   sed -n "s/.*${1}=\\([^ ]*\\).*/\\1/p"
 }
@@ -114,7 +129,7 @@ print_row() {
     }
   }')"
 
-  printf "| %-28s | %b | %b | %-12s |\n" \
+  printf "| %-28s | %b | %b | %-19s |\n" \
     "${label}" \
     "$(color_cell "${m2_display}" "${m2_wins}")" \
     "$(color_cell "${cpp_display}" "${cpp_wins}")" \
@@ -173,13 +188,16 @@ m2_gen_secs="$(extract_time_seconds "${m2_summary}" | sed -n '1p')"
 m2_total_secs="$(extract_time_seconds "${m2_summary}" | sed -n '2p')"
 m2_test_secs="$(awk -v total="${m2_total_secs}" -v gen="${m2_gen_secs}" 'BEGIN { printf "%.6f", total - gen }')"
 
+cpp_total_display="$(format_elapsed_precise "${cpp_total_secs}")"
+m2_total_display="$(format_elapsed_precise "${m2_total_secs}")"
+
 cpp_elapsed_secs="$(elapsed_to_seconds "${cpp_elapsed}")"
 m2_elapsed_secs="$(elapsed_to_seconds "${m2_elapsed}")"
 
 echo "Comparison"
-printf "| %-28s | %-22s | %-22s | %-12s |\n" "Metric" "M2" "C++" "% Improvement"
-printf "|-%-28s-|-%-22s-|-%-22s-|-%-12s-|\n" "$(printf '%.0s-' {1..28})" "$(printf '%.0s-' {1..22})" "$(printf '%.0s-' {1..22})" "$(printf '%.0s-' {1..12})"
-print_row "Total time elapsed" "${m2_elapsed}" "${cpp_elapsed}" "${m2_total_secs}" "${cpp_total_secs}"
+printf "| %-28s | %-22s | %-22s | %-19s |\n" "Metric" "M2" "C++" "C++ % Improvement"
+printf "|-%-28s-|-%-22s-|-%-22s-|-%-19s-|\n" "$(printf '%.0s-' {1..28})" "$(printf '%.0s-' {1..22})" "$(printf '%.0s-' {1..22})" "$(printf '%.0s-' {1..19})"
+print_row "Total time elapsed" "${m2_total_display}" "${cpp_total_display}" "${m2_total_secs}" "${cpp_total_secs}"
 print_row "CPU usage" "${m2_cpu}%" "${cpp_cpu}%" "${m2_cpu}" "${cpp_cpu}"
 print_row "Memory usage" "${m2_mem} KB" "${cpp_mem} KB" "${m2_mem}" "${cpp_mem}"
 print_row "Degree-sequence time" "${m2_gen_secs}s" "${cpp_gen_secs}s" "${m2_gen_secs}" "${cpp_gen_secs}"
