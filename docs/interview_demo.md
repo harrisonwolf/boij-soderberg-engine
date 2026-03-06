@@ -5,7 +5,7 @@ This runbook is for an 8-12 minute interview walkthrough that emphasizes:
 1. high-throughput search,
 2. clean staged pipeline,
 3. interpretable mathematical outputs,
-4. evidence-based comparison to a live Macaulay2 run when available.
+4. evidence-based comparison to a Macaulay2 built-in baseline.
 
 ## One-command demo
 
@@ -41,15 +41,19 @@ wc -l "$tmp_parsed" "$tmp_unique"
 
 ./build/bin/tell_which_violations data/processed/bad_ones_c3_rinsed.txt | sed -n '1,20p'
 
-bash scripts/benchmark_against_m2.sh 3 40 1
+# If Macaulay2 is installed (built-in baseline):
+bash scripts/benchmark_m2_builtin.sh 6 26
+
+# If Macaulay2 is unavailable, show historical context only:
+rg -n "findBadOnes\\(3,400\\)|Too many heap sections" research/macaulay2/badOneFinder.m2
 ```
 
 ## Narration prompts (short)
 
 - "This C++ pipeline separates generation, parsing, deduplication, and violation analysis, so each stage is measurable."
 - "On this machine, the `c=8,d=26` run processes ~1.56M sequences in a few seconds."
-- "This repo now has a standalone M2 benchmark script so the comparison is against an actual M2 run, not my C++ note."
-- "If M2 is unavailable on the interview machine, I can still show the historical notes as background, but not as benchmark evidence."
+- "The M2 baseline uses built-ins for generation and `pureBetti`, so it is a fair algorithmic baseline."
+- "If M2 is unavailable on the interview machine, historical notes are context only, not benchmark proof."
 
 ## Rehearsal checklist
 

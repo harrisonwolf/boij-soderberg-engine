@@ -101,13 +101,16 @@ fi
 
 echo
 echo "== Step 6: Macaulay2 comparison =="
-echo "Narration: Compare the same workload against a live M2 implementation when M2 is installed."
+echo "Narration: Compare against an M2 baseline that uses built-ins only."
 if command -v M2 >/dev/null 2>&1 || command -v macaulay2 >/dev/null 2>&1; then
-  bash scripts/benchmark_against_m2.sh 3 40 1
+  echo "Narration: This isolates algorithmic efficiency differences."
+  bash scripts/benchmark_m2_builtin.sh "${FAST_C}" "${FAST_D}"
 else
-  echo "M2 not installed on this machine; skipping live benchmark."
-  echo "Fallback historical note (not current benchmark evidence):"
+  echo "M2 not installed on this machine; cannot run live built-in baseline."
+  echo "Fallback historical note:"
   rg -n "findBadOnes\\(3,400\\)|Too many heap sections" research/macaulay2/badOneFinder.m2
+  echo "If M2 is available, run:"
+  echo "  bash scripts/benchmark_m2_builtin.sh ${FAST_C} ${FAST_D}"
 fi
 
 echo
