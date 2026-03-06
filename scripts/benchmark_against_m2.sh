@@ -89,6 +89,7 @@ print_row() {
   local lower_is_better="${6:-1}"
   local cpp_wins=0
   local m2_wins=0
+  local improvement
 
   if awk -v a="${m2_value}" -v b="${cpp_value}" -v lib="${lower_is_better}" 'BEGIN {
       if (a == b) exit 2;
@@ -103,10 +104,21 @@ print_row() {
     esac
   fi
 
-  printf "| %-28s | %b | %b |\n" \
+  improvement="$(awk -v m2="${m2_value}" -v cpp="${cpp_value}" -v lib="${lower_is_better}" 'BEGIN {
+    if (m2 == 0 || cpp == 0) {
+      print "n/a";
+    } else if (lib == 1) {
+      printf "%.0f%%", ((m2 / cpp) * 100) - 100;
+    } else {
+      printf "%.0f%%", ((cpp / m2) * 100) - 100;
+    }
+  }')"
+
+  printf "| %-28s | %b | %b | %-12s |\n" \
     "${label}" \
     "$(color_cell "${m2_display}" "${m2_wins}")" \
-    "$(color_cell "${cpp_display}" "${cpp_wins}")"
+    "$(color_cell "${cpp_display}" "${cpp_wins}")" \
+    "${improvement}"
 }
 
 sed \
@@ -165,9 +177,9 @@ cpp_elapsed_secs="$(elapsed_to_seconds "${cpp_elapsed}")"
 m2_elapsed_secs="$(elapsed_to_seconds "${m2_elapsed}")"
 
 echo "Comparison"
-printf "| %-28s | %-22s | %-22s |\n" "Metric" "M2" "C++"
-printf "|-%-28s-|-%-22s-|-%-22s-|\n" "$(printf '%.0s-' {1..28})" "$(printf '%.0s-' {1..22})" "$(printf '%.0s-' {1..22})"
-print_row "Total time elapsed" "${m2_elapsed}" "${cpp_elapsed}" "${m2_elapsed_secs}" "${cpp_elapsed_secs}"
+printf "| %-28s | %-22s | %-22s | %-12s |\n" "Metric" "M2" "C++" "% Improvement"
+printf "|-%-28s-|-%-22s-|-%-22s-|-%-12s-|\n" "$(printf '%.0s-' {1..28})" "$(printf '%.0s-' {1..22})" "$(printf '%.0s-' {1..22})" "$(printf '%.0s-' {1..12})"
+print_row "Total time elapsed" "${m2_elapsed}" "${cpp_elapsed}" "${m2_total_secs}" "${cpp_total_secs}"
 print_row "CPU usage" "${m2_cpu}%" "${cpp_cpu}%" "${m2_cpu}" "${cpp_cpu}"
 print_row "Memory usage" "${m2_mem} KB" "${cpp_mem} KB" "${m2_mem}" "${cpp_mem}"
 print_row "Degree-sequence time" "${m2_gen_secs}s" "${cpp_gen_secs}s" "${m2_gen_secs}" "${cpp_gen_secs}"
