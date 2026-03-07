@@ -19,8 +19,104 @@
 #include <numeric> //for gcd
 #include <sstream>
 #include <ctime>
+#include <string>
 #include "seq_funcs.h"
 using namespace std;
+
+namespace {
+
+long long count_degree_sequences(int c, int d, int lowbound) {
+	if(lowbound < 1) lowbound = 1;
+	int start_max = max(lowbound, c);
+	if(d < start_max) return 0;
+
+	auto choose = [](int n, int k) -> long long {
+		if(k < 0 || k > n) return 0;
+		if(k == 0 || k == n) return 1;
+		if(k > n - k) k = n - k;
+		long long result = 1;
+		for(int i = 1; i <= k; i++){
+			result = (result * (n - k + i)) / i;
+		}
+		return result;
+	};
+
+	long long total = 0;
+	for(int curr_max = start_max; curr_max <= d; curr_max++){
+		total += choose(curr_max - 1, c - 1);
+	}
+	return total;
+}
+
+struct ProgressWriter {
+	string path;
+	long long total;
+	clock_t last_write;
+	static constexpr clock_t min_interval = CLOCKS_PER_SEC / 5;
+
+	explicit ProgressWriter(int c, int d, int lowbound)
+		: path(""), total(count_degree_sequences(c, d, lowbound)), last_write(0) {
+		const char* env_path = getenv("BAD_ONE_PROGRESS_FILE");
+		if(env_path != nullptr){
+			path = env_path;
+		}
+	}
+
+	bool enabled() const {
+		return !path.empty();
+	}
+
+	void write_now(const string& phase, long long count) {
+		if(!enabled()) return;
+		ofstream progress_out(path, ios::trunc);
+		if(!progress_out.is_open()) return;
+		progress_out << "phase=" << phase << " count=" << count << " total=" << total << "\n";
+	}
+
+	void write_periodic(const string& phase, long long count) {
+		if(!enabled()) return;
+		clock_t now = clock();
+		if(last_write == 0 || now - last_write >= min_interval || count == total){
+			write_now(phase, count);
+			last_write = now;
+		}
+	}
+
+	void mark_done() {
+		if(!enabled()) return;
+		write_now("done", total);
+	}
+};
+
+void gen_deg_seqs_progress_impl(int start, int o, int n, int lowbound, vector<int>& prefix, vector<vector<int>>& retlist, ProgressWriter& progress) {
+	if(o == 1){
+		for(int i = start; i <= n; i++){
+			if(i < lowbound) continue;
+			vector<int> curr_seq = prefix;
+			curr_seq.push_back(i);
+			retlist.push_back(curr_seq);
+			progress.write_periodic("generation", static_cast<long long>(retlist.size()));
+		}
+		return;
+	}
+
+	for(int i = start; i <= n - o + 1; i++){
+		prefix.push_back(i);
+		gen_deg_seqs_progress_impl(i + 1, o - 1, n, lowbound, prefix, retlist, progress);
+		prefix.pop_back();
+	}
+}
+
+vector<vector<int>> gen_deg_seqs_with_progress(int c, int d, int lowbound, ProgressWriter& progress) {
+	vector<vector<int>> retseqs;
+	if(lowbound < 1) lowbound = 1;
+	vector<int> prefix = {0};
+	gen_deg_seqs_progress_impl(1, c, d, lowbound, prefix, retseqs, progress);
+	progress.write_now("generation", static_cast<long long>(retseqs.size()));
+	return retseqs;
+}
+
+}
 
 
 /*
@@ -64,6 +160,8 @@ int main(int argc, char** args){
 	outs.open(outfile_name);
 	if(!outs.is_open()){ cerr << "usage: bad_one_generator [codimension c] [max degree d] [outputfile]\nMake sure file \"" << outfile_name << "\" already exists.\n"; exit(1); }
 	outs.close();
+	ProgressWriter progress(c, d, l);
+	if(progress.enabled()) progress.write_now("generation", 0);
 	//now start the process
 	vector<vector<int>> bad_ones;
 	vector<int> test_seq;
@@ -107,10 +205,11 @@ int main(int argc, char** args){
 	cout << "Calling gen_deg_seqs(" << c << "," << d << "," << l << ")...\n";
 	clock_t start_program_time;
 	start_program_time = clock();
-	vector<vector<int>> possibles = gen_deg_seqs(c,d,l);
+	vector<vector<int>> possibles = progress.enabled() ? gen_deg_seqs_with_progress(c,d,l,progress) : gen_deg_seqs(c,d,l);
 	auto t = clock() - start_program_time;
 	double secs = ((float)t)/CLOCKS_PER_SEC;
 	cout << "Generated " << possibles.size() << " degree sequences in " << secs << " seconds\n";
+	cout << "Generation complete; starting BEH/LLBC tests on " << possibles.size() << " degree sequences\n";
 	
 
 //	cerr << "Testing pure betti on all seqs\n";
@@ -119,6 +218,7 @@ int main(int argc, char** args){
 	
 	cout << "Starting tests...\n";
 	int counter = 0;
+	progress.write_now("testing", 0);
 	/*
 	for(vector<int> curr_test_seq: possibles){
 		//cerr << "Currently testing " << seq_to_string(curr_test_seq) << endl;
@@ -143,7 +243,9 @@ int main(int argc, char** args){
 	for(vector<int> curr_test_seq: possibles){
 		if(!test_conjs(curr_test_seq)) bad_ones.push_back(curr_test_seq);
 		counter++; //making sure all were really tested
+		progress.write_periodic("testing", counter);
 	}
+	progress.write_now("testing", counter);
 	cout << "Tested BEH and LLBC on " << counter << " degree sequences\n";
 	//now print them
 //	cerr << "Bad ones found:\n";
@@ -167,6 +269,7 @@ int main(int argc, char** args){
 	}
 	outs << EOF;
 	outs.close();
+	progress.mark_done();
 	//now print them
 //	cout << "\nPrinting violators: \n";
 //	for(vector<int> bad_one: bad_ones){

@@ -4,6 +4,7 @@
 CODIM = __CODIM__;
 MAXDEG = __MAXDEG__;
 LOWBOUND = __LOWBOUND__;
+MILESTONE_FILE = "__MILESTONE_FILE__";
 
 binomM2 = (n,k) -> (
     if k < 0 or k > n then 0
@@ -133,12 +134,16 @@ gcdRinseCpp = (seqs) -> (
 genSecs := cpuTime();
 possibleSeqs = genDegSeqsCpp(CODIM, MAXDEG, LOWBOUND);
 genSecs = cpuTime() - genSecs;
+<<"Generated " << #possibleSeqs << " degree sequences in " << toString(genSecs) << " seconds" << endl;
+<<"Generation complete; starting BEH/LLBC tests on " << #possibleSeqs << " degree sequences" << endl;
+if MILESTONE_FILE =!= "" then (
+    (openOut MILESTONE_FILE) << "Generation complete; starting BEH/LLBC tests on " << #possibleSeqs << " degree sequences" << endl << close;
+    );
 testStartSecs := cpuTime();
 badOnes := select(possibleSeqs, seq -> not testConjsCpp(seq));
 rinsedBadOnes := gcdRinseCpp(badOnes);
 totalSecs := genSecs + (cpuTime() - testStartSecs);
 
-<<"Generated " << #possibleSeqs << " degree sequences in " << toString(genSecs) << " seconds" << endl;
 <<"Tested BEH and LLBC on " << #possibleSeqs << " degree sequences" << endl;
 <<"Finished all tests in " << toString(totalSecs) << " seconds" << endl;
 <<"badOnesList:" << endl;
