@@ -14,7 +14,10 @@ C="$1"
 D="$2"
 L="${3:-1}"
 
-if [[ ! -x "${BIN_DIR}/bad_one_generator" ]]; then
+if [[ ! -x "${BIN_DIR}/bad_one_generator" ]] \
+  || [[ "${REPO_ROOT}/apps/bad_one_generator.cc" -nt "${BIN_DIR}/bad_one_generator" ]] \
+  || [[ "${REPO_ROOT}/src/seq_funcs.cc" -nt "${BIN_DIR}/bad_one_generator" ]] \
+  || [[ "${REPO_ROOT}/include/seq_funcs.h" -nt "${BIN_DIR}/bad_one_generator" ]]; then
   echo "[build] Missing C++ binary. Running make..."
   make -C "${REPO_ROOT}"
 fi
@@ -37,13 +40,15 @@ cpp_summary="$(mktemp)"
 m2_summary="$(mktemp)"
 cpp_time_log="$(mktemp)"
 m2_time_log="$(mktemp)"
+cpp_progress_file="$(mktemp)"
+m2_milestone_file="$(mktemp)"
 
 GREEN=$'\033[32m'
 RED=$'\033[31m'
 RESET=$'\033[0m'
 
 cleanup() {
-  rm -f "${m2_script}"
+  rm -f "${m2_script}" "${cpp_progress_file}" "${m2_milestone_file}"
 }
 trap cleanup EXIT
 
@@ -73,10 +78,19 @@ format_elapsed_precise() {
   '
 }
 
+emit_progress_line() {
+  local message="$1"
+  if ! { printf '%s\n' "${message}" > /dev/tty; } 2>/dev/null; then
+    printf '%s\n' "${message}" >&2
+  fi
+}
+
 run_with_progress() {
   local label="$1"
   local interval="$2"
-  shift 2
+  local progress_file="${3:-}"
+  local milestone_file="${4:-}"
+  shift 4
 
   local start_ts
   start_ts="$(date +%s)"
@@ -84,17 +98,59 @@ run_with_progress() {
   "$@" &
   local cmd_pid=$!
 
-  while kill -0 "${cmd_pid}" 2>/dev/null; do
-    sleep "${interval}"
-    if kill -0 "${cmd_pid}" 2>/dev/null; then
-      local now_ts elapsed
+  local milestone_pid=""
+  if [[ -n "${milestone_file}" ]]; then
+    (
+      while kill -0 "${cmd_pid}" 2>/dev/null; do
+        if [[ -s "${milestone_file}" ]]; then
+          emit_progress_line "[progress] ${label} $(<"${milestone_file}")"
+          exit 0
+        fi
+        sleep 0.2
+      done
+    ) &
+    milestone_pid=$!
+  fi
+
+  (
+    while true; do
+      sleep "${interval}"
+      if ! kill -0 "${cmd_pid}" 2>/dev/null; then
+        exit 0
+      fi
+
+      local now_ts elapsed progress_message
       now_ts="$(date +%s)"
       elapsed=$((now_ts - start_ts))
-      printf '[progress] %s still running (%ss elapsed)\n' "${label}" "${elapsed}"
-    fi
-  done
+      progress_message="still running"
+      if [[ -n "${progress_file}" && -s "${progress_file}" ]]; then
+        local progress_line phase count total
+        progress_line="$(<"${progress_file}")"
+        phase="$(awk '{for (i = 1; i <= NF; i++) if ($i ~ /^phase=/) { sub(/^phase=/, "", $i); print $i; exit }}' <<< "${progress_line}")"
+        count="$(awk '{for (i = 1; i <= NF; i++) if ($i ~ /^count=/) { sub(/^count=/, "", $i); print $i; exit }}' <<< "${progress_line}")"
+        total="$(awk '{for (i = 1; i <= NF; i++) if ($i ~ /^total=/) { sub(/^total=/, "", $i); print $i; exit }}' <<< "${progress_line}")"
+        if [[ -n "${phase}" && "${count}" =~ ^[0-9]+$ && "${total}" =~ ^[0-9]+$ ]]; then
+          case "${phase}" in
+            generation) progress_message="generated ${count}/${total}" ;;
+            testing) progress_message="tested ${count}/${total}" ;;
+            done) progress_message="finished ${total}/${total}" ;;
+          esac
+        fi
+      fi
+      emit_progress_line "[progress] ${label} ${progress_message} (${elapsed}s elapsed)"
+    done
+  ) &
+  local progress_pid=$!
 
   wait "${cmd_pid}"
+  local cmd_status=$?
+  if [[ -n "${milestone_pid}" ]]; then
+    kill "${milestone_pid}" 2>/dev/null || true
+    wait "${milestone_pid}" 2>/dev/null || true
+  fi
+  kill "${progress_pid}" 2>/dev/null || true
+  wait "${progress_pid}" 2>/dev/null || true
+  return "${cmd_status}"
 }
 
 extract_after_equals() {
@@ -166,18 +222,20 @@ sed \
   -e "s/__CODIM__/${C}/g" \
   -e "s/__MAXDEG__/${D}/g" \
   -e "s/__LOWBOUND__/${L}/g" \
+  -e "s|__MILESTONE_FILE__|${m2_milestone_file}|g" \
   "${M2_TEMPLATE}" > "${m2_script}"
 
 echo "== C++ benchmark =="
-run_with_progress "C++ benchmark" 7 \
+run_with_progress "C++ benchmark" 5 "${cpp_progress_file}" "" \
   /usr/bin/time -f 'elapsed=%E cpu=%P maxrss_kb=%M' \
-  "${BIN_DIR}/bad_one_generator" "${cpp_out}" "${C}" "${D}" "${L}" \
+  env BAD_ONE_PROGRESS_FILE="${cpp_progress_file}" "${BIN_DIR}/bad_one_generator" "${cpp_out}" "${C}" "${D}" "${L}" \
   > "${cpp_log}" 2> "${cpp_time_log}"
 cat "${cpp_time_log}"
 awk 'BEGIN{mode=0} /^Bad ones for /{mode=1;next} /^gcd_rinsed ones: /{exit} mode==1 && /^\{/' "${cpp_out}" > "${cpp_bad_raw}"
 "${BIN_DIR}/remove_duplicates" "${cpp_bad_raw}" "${cpp_rinsed}" > /dev/null
 awk '
   /Generated/ { print; next }
+  /Generation complete; starting BEH\/LLBC tests/ { print; next }
   /Tested BEH and LLBC/ { print; next }
   /Finished all tests/ { print; next }
 ' "${cpp_log}" > "${cpp_summary}"
@@ -186,7 +244,7 @@ awk '/^\{/' "${cpp_rinsed}"
 
 echo
 echo "== Macaulay2 benchmark =="
-run_with_progress "Macaulay2 benchmark" 20 \
+run_with_progress "Macaulay2 benchmark" 5 "" "${m2_milestone_file}" \
   /usr/bin/time -f 'elapsed=%E cpu=%P maxrss_kb=%M' \
   "${M2_BIN}" --script "${m2_script}" \
   > "${m2_log}" 2> "${m2_time_log}"
@@ -195,6 +253,7 @@ awk 'BEGIN{mode=0} /^badOnesList:/{mode=1;next} /^gcdRinsedList:/{mode=0} mode==
 "${BIN_DIR}/remove_duplicates" "${m2_bad_raw}" "${m2_rinsed}" > /dev/null
 awk '
   /Generated .* degree sequences in .* seconds/ { print; next }
+  /Generation complete; starting BEH\/LLBC tests on .* degree sequences/ { print; next }
   /Tested BEH and LLBC on .* degree sequences/ { print; next }
   /Finished all tests in .* seconds/ { print; next }
 ' "${m2_log}" > "${m2_summary}"
@@ -221,12 +280,15 @@ m2_total_display="$(format_elapsed_precise "${m2_total_secs}")"
 
 cpp_elapsed_secs="$(elapsed_to_seconds "${cpp_elapsed}")"
 m2_elapsed_secs="$(elapsed_to_seconds "${m2_elapsed}")"
+cpp_elapsed_display="$(format_elapsed_precise "${cpp_elapsed_secs}")"
+m2_elapsed_display="$(format_elapsed_precise "${m2_elapsed_secs}")"
 
 echo "Comparison"
 printf "| %-28s | %-22s | %-22s | %-19s |\n" "Metric" "M2" "C++" "C++ % Improvement"
 printf "|-%-28s-|-%-22s-|-%-22s-|-%-19s-|\n" "$(printf '%.0s-' {1..28})" "$(printf '%.0s-' {1..22})" "$(printf '%.0s-' {1..22})" "$(printf '%.0s-' {1..19})"
-print_row "Total time elapsed" "${m2_total_display}" "${cpp_total_display}" "${m2_total_secs}" "${cpp_total_secs}"
+print_row "Total wall time elapsed" "${m2_elapsed_display}" "${cpp_elapsed_display}" "${m2_elapsed_secs}" "${cpp_elapsed_secs}"
 print_row "CPU usage" "${m2_cpu}%" "${cpp_cpu}%" "${m2_cpu}" "${cpp_cpu}"
 print_row "Memory usage" "${m2_mem} KB" "${cpp_mem} KB" "${m2_mem}" "${cpp_mem}"
+print_row "Program-reported total" "${m2_total_display}" "${cpp_total_display}" "${m2_total_secs}" "${cpp_total_secs}"
 print_row "Degree-sequence time" "${m2_gen_secs}s" "${cpp_gen_secs}s" "${m2_gen_secs}" "${cpp_gen_secs}"
 print_row "Conjecture-test time" "${m2_test_secs}s" "${cpp_test_secs}s" "${m2_test_secs}" "${cpp_test_secs}"
