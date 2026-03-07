@@ -72,13 +72,37 @@ format_elapsed_precise() {
   '
 }
 
+run_with_progress() {
+  local label="$1"
+  local interval="$2"
+  shift 2
+
+  local start_ts
+  start_ts="$(date +%s)"
+
+  "$@" &
+  local cmd_pid=$!
+
+  while kill -0 "${cmd_pid}" 2>/dev/null; do
+    sleep "${interval}"
+    if kill -0 "${cmd_pid}" 2>/dev/null; then
+      local now_ts elapsed
+      now_ts="$(date +%s)"
+      elapsed=$((now_ts - start_ts))
+      printf '[progress] %s still running (%ss elapsed)\n' "${label}" "${elapsed}"
+    fi
+  done
+
+  wait "${cmd_pid}"
+}
+
 extract_after_equals() {
   sed -n "s/.*${1}=\\([^ ]*\\).*/\\1/p"
 }
 
 extract_time_seconds() {
   awk '
-    match($0, /in ([0-9.]+) seconds/, a) { print a[1] }
+    match($0, /in ([0-9.eE+-]+) seconds/, a) { print a[1] }
   ' "$1"
 }
 
@@ -105,7 +129,7 @@ print_row() {
   local m2_wins=0
   local improvement
 
-  if awk -v a="${m2_value}" -v b="${cpp_value}" -v lib="${lower_is_better}" 'BEGIN {
+  if [[ -n "${m2_value}" && -n "${cpp_value}" ]] && awk -v a="${m2_value}" -v b="${cpp_value}" -v lib="${lower_is_better}" 'BEGIN {
       if (a == b) exit 2;
       if (lib == 1) exit (a < b ? 0 : 1);
       exit (a > b ? 0 : 1);
@@ -119,7 +143,9 @@ print_row() {
   fi
 
   improvement="$(awk -v m2="${m2_value}" -v cpp="${cpp_value}" -v lib="${lower_is_better}" 'BEGIN {
-    if (m2 == 0 || cpp == 0) {
+    if (m2 == "" || cpp == "") {
+      print "n/a";
+    } else if ((m2 + 0) == 0 || (cpp + 0) == 0) {
       print "n/a";
     } else if (lib == 1) {
       printf "%.0f%%", ((m2 / cpp) * 100) - 100;
@@ -188,7 +214,8 @@ exit 0
 EOF
 
 echo "== C++ benchmark =="
-/usr/bin/time -f 'elapsed=%E cpu=%P maxrss_kb=%M' \
+run_with_progress "C++ benchmark" 7 \
+  /usr/bin/time -f 'elapsed=%E cpu=%P maxrss_kb=%M' \
   "${BIN_DIR}/bad_one_generator" "${cpp_out}" "${C}" "${D}" "${L}" \
   > "${cpp_log}" 2> "${cpp_time_log}"
 cat "${cpp_time_log}"
@@ -204,7 +231,8 @@ awk '/^\{/' "${cpp_rinsed}"
 
 echo
 echo "== Macaulay2 benchmark (built-ins only) =="
-/usr/bin/time -f 'elapsed=%E cpu=%P maxrss_kb=%M' \
+run_with_progress "Macaulay2 benchmark" 20 \
+  /usr/bin/time -f 'elapsed=%E cpu=%P maxrss_kb=%M' \
   "${M2_BIN}" --script "${m2_script}" \
   > "${m2_log}" 2> "${m2_time_log}"
 cat "${m2_time_log}"
