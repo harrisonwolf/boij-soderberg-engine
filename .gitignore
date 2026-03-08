@@ -29,3 +29,8 @@ Thumbs.db
 !research/snapshots/**
 !research/archive/generated/**
 !research/archive/editor-backups/**
+
+# Exclude generated burnfiles and backup snapshots from version control
+**/burnfiles/
+research/archive/editor-backups/
+research/snapshots/cppCode_backup_*/

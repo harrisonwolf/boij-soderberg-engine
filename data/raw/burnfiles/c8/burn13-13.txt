@@ -1,5 +1,0 @@
-Bad ones for codimension c = 8 up to max degree d = 13
-{0,1,2,8,9,10,11,12,13}
-gcd_rinsed ones: 
-{0,1,2,8,9,10,11,12,13}
--1

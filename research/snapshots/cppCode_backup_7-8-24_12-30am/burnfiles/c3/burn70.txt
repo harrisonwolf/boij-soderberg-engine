@@ -1,4 +1,0 @@
-Bad ones for codimension c = 3 up to max degree d = 7100
-{0,2065,7021,7080}
-gcd_rinsed ones: 
--1

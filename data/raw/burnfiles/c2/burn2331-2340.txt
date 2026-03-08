@@ -1,8 +1,0 @@
-Bad ones for codimension c = 2 up to max degree d = 2340
-{0,1166,2332}
-{0,1167,2334}
-{0,1168,2336}
-{0,1169,2338}
-{0,1170,2340}
-gcd_rinsed ones: 
--1

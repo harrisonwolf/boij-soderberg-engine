@@ -1,2 +1,0 @@
-Rinsed degree sequences from file /home/harrisonw/betti/code/cppCode/burnfiles/c2/huge_output_parsed.txt
-{0,1,2}
