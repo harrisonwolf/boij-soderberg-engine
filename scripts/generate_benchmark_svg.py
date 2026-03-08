@@ -92,7 +92,7 @@ def rect(x: float, y: float, w: float, h: float, fill: str, stroke: str = "none"
     return f'<rect x="{x:.2f}" y="{y:.2f}" width="{w:.2f}" height="{h:.2f}" fill="{fill}" stroke="{stroke}" />'
 
 
-def generate_svg(rows, codim: int, out_path: Path):
+def generate_svg(rows, codim: int, out_path: Path, runtime_scale: str):
     width = 1100
     height = 860
     margin_left = 90
@@ -113,13 +113,15 @@ def generate_svg(rows, codim: int, out_path: Path):
     max_n = max(row["n"] for row in rows)
 
     runtime_vals = [row["cpp_total_sec"] for row in rows] + [row["m2_total_sec"] for row in rows]
-    runtime_min = min(runtime_vals) * 0.8
-    runtime_max = max(runtime_vals) * 1.2
-    runtime_ticks = [0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
-    runtime_ticks = [tick for tick in runtime_ticks if runtime_min <= tick <= runtime_max]
-    if runtime_max > 1.0:
-        runtime_ticks.append(2.0)
-    runtime_ticks = sorted(set(runtime_ticks))
+    if runtime_scale == "log":
+        runtime_min = min(runtime_vals) * 0.8
+        runtime_max = max(runtime_vals) * 1.2
+        runtime_ticks = [0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0]
+        runtime_ticks = [tick for tick in runtime_ticks if runtime_min <= tick <= runtime_max]
+    else:
+        runtime_min = 0.0
+        runtime_max = max(runtime_vals) * 1.08
+        runtime_ticks = [runtime_max * frac / 5.0 for frac in range(6)]
 
     mem_vals = [row["cpp_mem_kb"] for row in rows] + [row["m2_mem_kb"] for row in rows]
     mem_min = 0.0
@@ -130,7 +132,12 @@ def generate_svg(rows, codim: int, out_path: Path):
     parts.append(f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
     parts.append(rect(0, 0, width, height, "#f8fafc"))
     parts.append(text(40, 45, f"Codimension {codim}: runtime and memory vs number of tested sequences (n)", 24, weight="bold"))
-    parts.append(text(40, 72, "Runtime panel uses a log scale so C++ and Macaulay2 are both visible.", 14))
+    scale_note = (
+        "Runtime panel uses a log scale so C++ and Macaulay2 are both visible."
+        if runtime_scale == "log"
+        else "Runtime panel uses a linear scale."
+    )
+    parts.append(text(40, 72, scale_note, 14))
     parts.append(text(40, 92, "Source: data/processed/benchmarks/builtin_m2_matrix.csv", 14))
 
     legend_y = 40
@@ -141,10 +148,13 @@ def generate_svg(rows, codim: int, out_path: Path):
     parts.append(circle(885, legend_y, m2_color))
     parts.append(text(910, legend_y + 5, "M2 built-in"))
 
-    parts.append(text(40, 110, "Runtime (seconds, log scale)", 18, weight="bold"))
+    parts.append(text(40, 110, f"Runtime (seconds, {runtime_scale} scale)", 18, weight="bold"))
     parts.append(rect(plot_left, runtime_top, panel_width, runtime_height, "#ffffff", "#d1d5db"))
     for tick in runtime_ticks:
-        y = y_scale_log(tick, runtime_min, runtime_max, runtime_top, runtime_height)
+        if runtime_scale == "log":
+            y = y_scale_log(tick, runtime_min, runtime_max, runtime_top, runtime_height)
+        else:
+            y = y_scale_linear(tick, runtime_min, runtime_max, runtime_top, runtime_height)
         parts.append(line(plot_left, y, plot_right, y, grid_color, 1))
         parts.append(text(plot_left - 12, y + 5, fmt_num(tick), 12, anchor="end"))
 
@@ -152,8 +162,12 @@ def generate_svg(rows, codim: int, out_path: Path):
     m2_runtime_pts = []
     for row in rows:
         x = x_scale(row["n"], min_n, max_n, plot_left, panel_width)
-        cpp_y = y_scale_log(row["cpp_total_sec"], runtime_min, runtime_max, runtime_top, runtime_height)
-        m2_y = y_scale_log(row["m2_total_sec"], runtime_min, runtime_max, runtime_top, runtime_height)
+        if runtime_scale == "log":
+            cpp_y = y_scale_log(row["cpp_total_sec"], runtime_min, runtime_max, runtime_top, runtime_height)
+            m2_y = y_scale_log(row["m2_total_sec"], runtime_min, runtime_max, runtime_top, runtime_height)
+        else:
+            cpp_y = y_scale_linear(row["cpp_total_sec"], runtime_min, runtime_max, runtime_top, runtime_height)
+            m2_y = y_scale_linear(row["m2_total_sec"], runtime_min, runtime_max, runtime_top, runtime_height)
         cpp_runtime_pts.append((x, cpp_y))
         m2_runtime_pts.append((x, m2_y))
         parts.append(circle(x, cpp_y, cpp_color))
@@ -195,19 +209,26 @@ def generate_svg(rows, codim: int, out_path: Path):
 
 
 def main():
-    if len(sys.argv) != 4:
-        print("Usage: python3 scripts/generate_benchmark_svg.py <csv_path> <codim> <output_svg>", file=sys.stderr)
+    if len(sys.argv) not in (4, 5):
+        print(
+            "Usage: python3 scripts/generate_benchmark_svg.py <csv_path> <codim> <output_svg> [log|linear]",
+            file=sys.stderr,
+        )
         return 1
 
     csv_path = Path(sys.argv[1])
     codim = int(sys.argv[2])
     out_path = Path(sys.argv[3])
+    runtime_scale = sys.argv[4] if len(sys.argv) == 5 else "log"
+    if runtime_scale not in {"log", "linear"}:
+        print("Runtime scale must be 'log' or 'linear'", file=sys.stderr)
+        return 1
     rows = read_rows(csv_path, codim)
     if not rows:
         print(f"No rows found for codimension {codim}", file=sys.stderr)
         return 2
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    generate_svg(rows, codim, out_path)
+    generate_svg(rows, codim, out_path, runtime_scale)
     print(out_path)
     return 0
 

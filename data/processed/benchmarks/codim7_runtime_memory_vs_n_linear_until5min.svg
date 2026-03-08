@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="860" viewBox="0 0 1100 860">
+<rect x="0.00" y="0.00" width="1100.00" height="860.00" fill="#f8fafc" stroke="none" />
+<text x="40.00" y="45.00" font-family="Helvetica, Arial, sans-serif" font-size="24" text-anchor="start" font-weight="bold" fill="#111827">Codimension 7: runtime and memory vs number of tested sequences (n)</text>
+<text x="40.00" y="72.00" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="start" font-weight="normal" fill="#111827">Runtime panel uses a linear scale.</text>
+<text x="40.00" y="92.00" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="start" font-weight="normal" fill="#111827">Source: data/processed/benchmarks/builtin_m2_matrix.csv</text>
+<line x1="760.00" y1="40.00" x2="790.00" y2="40.00" stroke="#0f766e" stroke-width="3" />
+<circle cx="775.00" cy="40.00" r="4.5" fill="#0f766e" />
+<text x="800.00" y="45.00" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="start" font-weight="normal" fill="#111827">C++</text>
+<line x1="870.00" y1="40.00" x2="900.00" y2="40.00" stroke="#b91c1c" stroke-width="3" />
+<circle cx="885.00" cy="40.00" r="4.5" fill="#b91c1c" />
+<text x="910.00" y="45.00" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="start" font-weight="normal" fill="#111827">M2 built-in</text>
+<text x="40.00" y="110.00" font-family="Helvetica, Arial, sans-serif" font-size="18" text-anchor="start" font-weight="bold" fill="#111827">Runtime (seconds, linear scale)</text>
+<rect x="90.00" y="120.00" width="970.00" height="250.00" fill="#ffffff" stroke="#d1d5db" />
+<line x1="90.00" y1="370.00" x2="1060.00" y2="370.00" stroke="#e5e7eb" stroke-width="1" />
+<text x="78.00" y="375.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">0.000</text>
+<line x1="90.00" y1="320.00" x2="1060.00" y2="320.00" stroke="#e5e7eb" stroke-width="1" />
+<text x="78.00" y="325.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">89.7</text>
+<line x1="90.00" y1="270.00" x2="1060.00" y2="270.00" stroke="#e5e7eb" stroke-width="1" />
+<text x="78.00" y="275.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">179.4</text>
+<line x1="90.00" y1="220.00" x2="1060.00" y2="220.00" stroke="#e5e7eb" stroke-width="1" />
+<text x="78.00" y="225.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">269.1</text>
+<line x1="90.00" y1="170.00" x2="1060.00" y2="170.00" stroke="#e5e7eb" stroke-width="1" />
+<text x="78.00" y="175.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">358.8</text>
+<line x1="90.00" y1="120.00" x2="1060.00" y2="120.00" stroke="#e5e7eb" stroke-width="1" />
+<text x="78.00" y="125.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">448.5</text>
+<circle cx="90.00" cy="369.90" r="4.5" fill="#0f766e" />
+<circle cx="90.00" cy="365.62" r="4.5" fill="#b91c1c" />
+<text x="90.00" y="392.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="normal" fill="#111827">d=20</text>
+<text x="90.00" y="410.00" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#111827">n=77,520</text>
+<circle cx="169.23" cy="369.59" r="4.5" fill="#0f766e" />
+<circle cx="169.23" cy="349.36" r="4.5" fill="#b91c1c" />
+<text x="169.23" y="392.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="normal" fill="#111827">d=24</text>
+<text x="169.23" y="410.00" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#111827">n=346,104</text>
+<circle cx="416.40" cy="368.18" r="4.5" fill="#0f766e" />
+<circle cx="416.40" cy="290.66" r="4.5" fill="#b91c1c" />
+<text x="416.40" y="392.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="normal" fill="#111827">d=28</text>
+<text x="416.40" y="410.00" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#111827">n=1,184,040</text>
+<circle cx="1060.00" cy="362.70" r="4.5" fill="#0f766e" />
+<circle cx="1060.00" cy="138.52" r="4.5" fill="#b91c1c" />
+<text x="1060.00" y="392.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="normal" fill="#111827">d=32</text>
+<text x="1060.00" y="410.00" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#111827">n=3,365,856</text>
+<polyline fill="none" stroke="#0f766e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="90.00,369.90 169.23,369.59 416.40,368.18 1060.00,362.70" />
+<polyline fill="none" stroke="#b91c1c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="90.00,365.62 169.23,349.36 416.40,290.66 1060.00,138.52" />
+<text x="575.00" y="438.00" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" font-weight="normal" fill="#111827">max degree / number of tested degree sequences</text>
+<text x="40.00" y="460.00" font-family="Helvetica, Arial, sans-serif" font-size="18" text-anchor="start" font-weight="bold" fill="#111827">Peak memory (maxrss_kb, linear scale)</text>
+<rect x="90.00" y="470.00" width="970.00" height="250.00" fill="#ffffff" stroke="#d1d5db" />
+<line x1="90.00" y1="720.00" x2="1060.00" y2="720.00" stroke="#e5e7eb" stroke-width="1" />
+<text x="78.00" y="725.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">0</text>
+<line x1="90.00" y1="716.41" x2="1060.00" y2="716.41" stroke="#e5e7eb" stroke-width="1" />
+<text x="78.00" y="721.41" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">20,000</text>
+<line x1="90.00" y1="712.83" x2="1060.00" y2="712.83" stroke="#e5e7eb" stroke-width="1" />
+<text x="78.00" y="717.83" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">40,000</text>
+<line x1="90.00" y1="709.24" x2="1060.00" y2="709.24" stroke="#e5e7eb" stroke-width="1" />
+<text x="78.00" y="714.24" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">60,000</text>
+<line x1="90.00" y1="705.65" x2="1060.00" y2="705.65" stroke="#e5e7eb" stroke-width="1" />
+<text x="78.00" y="710.65" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">80,000</text>
+<line x1="90.00" y1="702.07" x2="1060.00" y2="702.07" stroke="#e5e7eb" stroke-width="1" />
+<text x="78.00" y="707.07" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">100,000</text>
+<circle cx="90.00" cy="718.27" r="4.5" fill="#0f766e" />
+<circle cx="90.00" cy="699.82" r="4.5" fill="#b91c1c" />
+<text x="90.00" y="742.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="normal" fill="#111827">d=20</text>
+<text x="90.00" y="760.00" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#111827">n=77,520</text>
+<circle cx="169.23" cy="714.94" r="4.5" fill="#0f766e" />
+<circle cx="169.23" cy="679.54" r="4.5" fill="#b91c1c" />
+<text x="169.23" y="742.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="normal" fill="#111827">d=24</text>
+<text x="169.23" y="760.00" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#111827">n=346,104</text>
+<circle cx="416.40" cy="701.75" r="4.5" fill="#0f766e" />
+<circle cx="416.40" cy="608.79" r="4.5" fill="#b91c1c" />
+<text x="416.40" y="742.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="normal" fill="#111827">d=28</text>
+<text x="416.40" y="760.00" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#111827">n=1,184,040</text>
+<circle cx="1060.00" cy="676.89" r="4.5" fill="#0f766e" />
+<circle cx="1060.00" cy="488.52" r="4.5" fill="#b91c1c" />
+<text x="1060.00" y="742.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="normal" fill="#111827">d=32</text>
+<text x="1060.00" y="760.00" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#111827">n=3,365,856</text>
+<polyline fill="none" stroke="#0f766e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="90.00,718.27 169.23,714.94 416.40,701.75 1060.00,676.89" />
+<polyline fill="none" stroke="#b91c1c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="90.00,699.82 169.23,679.54 416.40,608.79 1060.00,488.52" />
+<text x="575.00" y="788.00" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" font-weight="normal" fill="#111827">max degree / number of tested degree sequences</text>
+<text x="40.00" y="815.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" font-weight="normal" fill="#111827">Generated with scripts/generate_benchmark_svg.py</text>
+</svg>

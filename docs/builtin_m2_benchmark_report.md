@@ -11,6 +11,10 @@ Artifacts:
 
 - Reproduction script: [scripts/run_builtin_benchmark_matrix.sh](/home/wolve/projects/boij-soderberg-engine-repo/scripts/run_builtin_benchmark_matrix.sh)
 - SVG graph for fixed codimension 5: [data/processed/benchmarks/codim5_runtime_memory_vs_n.svg](/home/wolve/projects/boij-soderberg-engine-repo/data/processed/benchmarks/codim5_runtime_memory_vs_n.svg)
+- Linear-scale SVG for fixed codimension 5: [data/processed/benchmarks/codim5_runtime_memory_vs_n_linear.svg](/home/wolve/projects/boij-soderberg-engine-repo/data/processed/benchmarks/codim5_runtime_memory_vs_n_linear.svg)
+- Threshold sweep script: [scripts/run_until_m2_threshold.sh](/home/wolve/projects/boij-soderberg-engine-repo/scripts/run_until_m2_threshold.sh)
+- Extended threshold CSV (`c=7` until M2 > 300s): [data/processed/benchmarks/codim7_until_m2_300s.csv](/home/wolve/projects/boij-soderberg-engine-repo/data/processed/benchmarks/codim7_until_m2_300s.csv)
+- Linear-scale SVG for threshold sweep: [data/processed/benchmarks/codim7_runtime_memory_vs_n_linear_until5min.svg](/home/wolve/projects/boij-soderberg-engine-repo/data/processed/benchmarks/codim7_runtime_memory_vs_n_linear_until5min.svg)
 - Summary CSV: [data/processed/benchmarks/builtin_m2_matrix.csv](/home/wolve/projects/boij-soderberg-engine-repo/data/processed/benchmarks/builtin_m2_matrix.csv)
 - Raw logs: [data/processed/benchmarks/builtin_m2_logs](/home/wolve/projects/boij-soderberg-engine-repo/data/processed/benchmarks/builtin_m2_logs)
 
@@ -69,11 +73,30 @@ xychart-beta
 For the specific visualization you asked for, with codimension fixed and `n` on the x-axis, open:
 
 - [data/processed/benchmarks/codim5_runtime_memory_vs_n.svg](/home/wolve/projects/boij-soderberg-engine-repo/data/processed/benchmarks/codim5_runtime_memory_vs_n.svg)
+- [data/processed/benchmarks/codim5_runtime_memory_vs_n_linear.svg](/home/wolve/projects/boij-soderberg-engine-repo/data/processed/benchmarks/codim5_runtime_memory_vs_n_linear.svg)
 
 That SVG has two color-coded panels for codimension `5`:
 
 - runtime vs `n` for C++ and built-in M2,
 - peak memory vs `n` for C++ and built-in M2.
+
+## Extended Threshold Sweep
+
+I also ran an extended fixed-codimension sweep at `c=7`, increasing max degree until the built-in M2 runtime exceeded `300` seconds.
+
+Result:
+
+- the first run exceeding 5 minutes was `c=7, d=32`
+- candidate sequences tested: `3,365,856`
+- C++ total time: `13.0959s`
+- M2 total time: `415.285s`
+- C++ maxrss: `240,400 KB`
+- M2 maxrss: `1,290,816 KB`
+
+Artifacts:
+
+- CSV: [data/processed/benchmarks/codim7_until_m2_300s.csv](/home/wolve/projects/boij-soderberg-engine-repo/data/processed/benchmarks/codim7_until_m2_300s.csv)
+- linear-scale SVG: [data/processed/benchmarks/codim7_runtime_memory_vs_n_linear_until5min.svg](/home/wolve/projects/boij-soderberg-engine-repo/data/processed/benchmarks/codim7_runtime_memory_vs_n_linear_until5min.svg)
 
 ## Memory Chart
 
