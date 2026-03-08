@@ -6,8 +6,8 @@ BUILD_DIR := build
 OBJ_DIR := $(BUILD_DIR)/obj
 BIN_DIR := $(BUILD_DIR)/bin
 
-DEFAULT_BINS := bad_one_generator parse_huge_output remove_duplicates test_program tell_which_violations find_big_ones
-EXTRA_BINS := L_finder quick_run find_172 foo boij_soderberg_calculator
+DEFAULT_BINS := bad_one_generator parse_huge_output remove_duplicates test_program tell_which_violations find_big_ones boij_soderberg_calculator
+EXTRA_BINS := L_finder quick_run find_172 foo
 
 .PHONY: all clean $(DEFAULT_BINS) $(EXTRA_BINS)
 
