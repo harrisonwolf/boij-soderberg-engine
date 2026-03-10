@@ -20,33 +20,11 @@
 #include <sstream>
 #include <ctime>
 #include <string>
+#include "algorithm_helpers.h"
 #include "seq_funcs.h"
 using namespace std;
 
 namespace {
-
-long long count_degree_sequences(int c, int d, int lowbound) {
-	if(lowbound < 1) lowbound = 1;
-	int start_max = max(lowbound, c);
-	if(d < start_max) return 0;
-
-	auto choose = [](int n, int k) -> long long {
-		if(k < 0 || k > n) return 0;
-		if(k == 0 || k == n) return 1;
-		if(k > n - k) k = n - k;
-		long long result = 1;
-		for(int i = 1; i <= k; i++){
-			result = (result * (n - k + i)) / i;
-		}
-		return result;
-	};
-
-	long long total = 0;
-	for(int curr_max = start_max; curr_max <= d; curr_max++){
-		total += choose(curr_max - 1, c - 1);
-	}
-	return total;
-}
 
 struct ProgressWriter {
 	string path;

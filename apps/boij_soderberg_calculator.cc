@@ -7,15 +7,11 @@
 #include <utility>
 #include <vector>
 
+#include "algorithm_helpers.h"
 #include "seq_funcs.h"
 #include "test_funcs.h"
 
 namespace {
-
-struct Rational {
-	long long num;
-	long long den;
-};
 
 std::string trim(const std::string &input) {
 	size_t start = 0;
@@ -73,31 +69,7 @@ bool parse_degree_sequence(const std::string &line, std::vector<int> &degrees, s
 	return true;
 }
 
-std::vector<Rational> compute_pi_values(const std::vector<int> &degrees) {
-	std::vector<Rational> pi_values;
-	pi_values.reserve(degrees.size());
-	pi_values.push_back({1, 1});
-
-	for (size_t i = 1; i < degrees.size(); ++i) {
-		long long numerator = 1;
-		long long denominator = 1;
-
-		for (size_t j = 1; j < degrees.size(); ++j) {
-			if (j == i) {
-				continue;
-			}
-			numerator *= degrees[j];
-			denominator *= std::llabs(static_cast<long long>(degrees[j]) - degrees[i]);
-		}
-
-		const long long divisor = std::gcd(numerator, denominator);
-		pi_values.push_back({numerator / divisor, denominator / divisor});
-	}
-
-	return pi_values;
-}
-
-std::string rational_to_string(const Rational &value) {
+std::string rational_to_string(const RationalValue &value) {
 	if (value.den == 1) {
 		return std::to_string(value.num);
 	}
@@ -115,7 +87,7 @@ std::string shift_term(int degree, long long betti_number) {
 }
 
 void print_report(const std::vector<int> &degrees) {
-	const std::vector<Rational> pi_values = compute_pi_values(degrees);
+	const std::vector<RationalValue> pi_values = compute_pi_values(degrees);
 	const std::vector<long long> betti_numbers = pure_betti(degrees);
 	const long long L = calc_L(degrees);
 	const bool passes_beh = test_BEH(betti_numbers);

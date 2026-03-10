@@ -6,7 +6,7 @@ BUILD_DIR := build
 OBJ_DIR := $(BUILD_DIR)/obj
 BIN_DIR := $(BUILD_DIR)/bin
 
-DEFAULT_BINS := bad_one_generator parse_huge_output remove_duplicates test_program tell_which_violations find_big_ones boij_soderberg_calculator
+DEFAULT_BINS := bad_one_generator parse_huge_output remove_duplicates test_program tell_which_violations find_big_ones boij_soderberg_calculator algorithm_test_driver
 EXTRA_BINS := L_finder quick_run find_172 foo
 
 .PHONY: all clean $(DEFAULT_BINS) $(EXTRA_BINS)
@@ -33,8 +33,9 @@ quick_run: $(BIN_DIR)/quick_run
 find_172: $(BIN_DIR)/find_172
 foo: $(BIN_DIR)/foo
 boij_soderberg_calculator: $(BIN_DIR)/boij_soderberg_calculator
+algorithm_test_driver: $(BIN_DIR)/algorithm_test_driver
 
-$(BIN_DIR)/bad_one_generator: $(OBJ_DIR)/apps/bad_one_generator.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o | $(BIN_DIR)
+$(BIN_DIR)/bad_one_generator: $(OBJ_DIR)/apps/bad_one_generator.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/algorithm_helpers.o | $(BIN_DIR)
 	$(CXX) $^ -o $@
 
 $(BIN_DIR)/parse_huge_output: $(OBJ_DIR)/apps/parse_huge_output.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o | $(BIN_DIR)
@@ -49,10 +50,7 @@ $(BIN_DIR)/test_program: $(OBJ_DIR)/apps/test_program.o $(OBJ_DIR)/src/seq_funcs
 $(BIN_DIR)/tell_which_violations: $(OBJ_DIR)/apps/tell_which_violations.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o | $(BIN_DIR)
 	$(CXX) $^ -o $@
 
-$(BIN_DIR)/find_big_ones: $(OBJ_DIR)/apps/find_big_ones.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o | $(BIN_DIR)
-	$(CXX) $^ -o $@
-
-$(BIN_DIR)/L_finder: $(OBJ_DIR)/apps/L_finder.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o | $(BIN_DIR)
+$(BIN_DIR)/L_finder: $(OBJ_DIR)/apps/L_finder.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o $(OBJ_DIR)/src/search_algorithms.o | $(BIN_DIR)
 	$(CXX) $^ -o $@
 
 $(BIN_DIR)/quick_run: $(OBJ_DIR)/apps/quick_run.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o | $(BIN_DIR)
@@ -64,7 +62,13 @@ $(BIN_DIR)/find_172: $(OBJ_DIR)/apps/find_172.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ
 $(BIN_DIR)/foo: $(OBJ_DIR)/apps/foo.o | $(BIN_DIR)
 	$(CXX) $^ -o $@
 
-$(BIN_DIR)/boij_soderberg_calculator: $(OBJ_DIR)/apps/boij_soderberg_calculator.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o | $(BIN_DIR)
+$(BIN_DIR)/boij_soderberg_calculator: $(OBJ_DIR)/apps/boij_soderberg_calculator.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o $(OBJ_DIR)/src/algorithm_helpers.o | $(BIN_DIR)
+	$(CXX) $^ -o $@
+
+$(BIN_DIR)/find_big_ones: $(OBJ_DIR)/apps/find_big_ones.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o $(OBJ_DIR)/src/search_algorithms.o | $(BIN_DIR)
+	$(CXX) $^ -o $@
+
+$(BIN_DIR)/algorithm_test_driver: $(OBJ_DIR)/apps/algorithm_test_driver.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o $(OBJ_DIR)/src/algorithm_helpers.o $(OBJ_DIR)/src/search_algorithms.o $(OBJ_DIR)/src/test_harness.o | $(BIN_DIR)
 	$(CXX) $^ -o $@
 
 clean:
