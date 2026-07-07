@@ -219,7 +219,11 @@ int main(int argc, char** args){
 	}
 	*/
 	for(vector<int> curr_test_seq: possibles){
-		if(!test_conjs(curr_test_seq)) bad_ones.push_back(curr_test_seq);
+		//use the full exact path (pure_betti + BEH + LLBC). The test_conjs early-exit
+		//shortcut is unsound: its L>=binom(c,c/2) autopass misses genuine BEH violators
+		//(e.g. {0,1,2,3,4,5,11,12} at c=7), and it is also slower than this path.
+		vector<long long> B = pure_betti(curr_test_seq);
+		if(!test_BEH(B) || !test_LLBC(B)) bad_ones.push_back(curr_test_seq);
 		counter++; //making sure all were really tested
 		progress.write_periodic("testing", counter);
 	}
