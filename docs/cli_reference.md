@@ -27,7 +27,7 @@ Usage:
 bad_one_generator [outputfile] [codimension c] [max degree d] [optional: lowbound l]
 ```
 
-Generates degree sequences with `gen_deg_seqs(c,d,l)`, tests them with `test_conjs(...)`, and writes all violators plus a `gcd_rinsed` subset to the output file.
+Generates degree sequences with `gen_deg_seqs(c,d,l)`, tests them with the full `pure_betti` + `test_BEH` + `test_LLBC` path, and writes all violators plus a `gcd_rinsed` subset to the output file.
 
 Notes:
 

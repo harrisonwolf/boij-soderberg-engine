@@ -88,7 +88,7 @@ Fallback demo profile:
 bash scripts/interview_demo.sh --fallback
 ```
 
-Runbook and narration prompts: [docs/interview_demo.md](/mnt/c/Users/wolve/.codex/worktrees/1037/boij-soderberg-engine-repo/docs/interview_demo.md)
+
 
 Direct Macaulay2 baseline:
 
@@ -100,6 +100,6 @@ This requires `M2` or `macaulay2` on `PATH`.
 
 ## Related documentation
 
-- [docs/migration_note.md](/mnt/c/Users/wolve/.codex/worktrees/1037/boij-soderberg-engine-repo/docs/migration_note.md): notes on the structural migration from the legacy layout.
-- [docs/legacy_cppcode_notes.md](/mnt/c/Users/wolve/.codex/worktrees/1037/boij-soderberg-engine-repo/docs/legacy_cppcode_notes.md): preserved operational notes from older versions.
+- [migration_note.md](migration_note.md): notes on the structural migration from the legacy layout.
+- [legacy_cppcode_notes.md](legacy_cppcode_notes.md): preserved operational notes from older versions.
 - `research/`: archive and snapshot material; active development is centered in `apps/`, `src/`, `include/`, `scripts/`, and `data/`.

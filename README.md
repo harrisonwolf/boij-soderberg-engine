@@ -1,40 +1,39 @@
 # boij-soderberg-engine
 
-C++ tooling and datasets for Boij-Soderberg-style degree-sequence experiments, centered on pure Betti tables and searches for sequences that violate BEH or LLBC-style checks. The repository is CLI-first and research-oriented rather than a polished end-user package, is not intended as a general-purpose Boij-Soderberg library API, and may require parameter tuning for very large runs.
+A hand-written C++ engine for experiments in Boij–Söderberg theory. It enumerates candidate degree sequences, computes their pure Betti tables, and searches for sequences that violate two Betti-number lower-bound conjectures — the Buchsbaum–Eisenbud–Horrocks ("BEH") rank bound and an "LLBC" total-rank bound.
+
+It was built in 2024 for the research behind a co-authored paper, *Arithmetic in the Boij–Söderberg Cone* (Boocher, Huang, Wolf, [arXiv:2512.24320](https://arxiv.org/abs/2512.24320)), where its exhaustive searches surfaced the counterexample candidates the paper then classifies. The repository is CLI-first and research-oriented, not a general-purpose library.
+
+## Provenance
+
+The ~1,200-line mathematical core — `src/seq_funcs.cc`, `src/test_funcs.cc`, `src/binom.cc` and their headers (`gen_deg_seqs`, `pure_betti`, `test_BEH`, `test_LLBC`, `calc_L`) — is hand-written, no AI, and is cross-validated case-by-case against Macaulay2's own `BoijSoederberg` package (`pureBetti`). The repository was later reorganized and given its test and benchmark harness with the help of an AI coding agent.
 
 ## What This Repo Does
-
-This repository is used to:
 
 - generate candidate degree sequences in fixed codimension,
 - compute pure Betti sequences from those degree sequences,
 - calculate `L` values and related `pi_i`/`B_i` data,
-- test conjectural constraints such as BEH and LLBC,
+- test conjectural lower bounds (BEH and LLBC),
 - collect potential counterexamples ("bad ones"),
 - parse and deduplicate large batch outputs.
 
-Historical outputs and research artifacts are kept in-repo for reproducibility. Longer operational notes, detailed CLI usage, and batch workflow material have been moved into [docs/cli_reference.md](/mnt/c/Users/wolve/.codex/worktrees/1037/boij-soderberg-engine-repo/docs/cli_reference.md) and [docs/batch_workflows.md](/mnt/c/Users/wolve/.codex/worktrees/1037/boij-soderberg-engine-repo/docs/batch_workflows.md).
+Historical outputs and research artifacts are kept in-repo for reproducibility. Longer operational notes, detailed CLI usage, and batch workflow material live in [docs/cli_reference.md](docs/cli_reference.md) and [docs/batch_workflows.md](docs/batch_workflows.md).
 
-## Subdirectories
+## Performance vs. Macaulay2
 
-- `apps/`: executable entry points and one-off research drivers.
-- `src/`: shared implementation for sequence generation, Betti computations, checks, and utilities.
-- `include/`: headers for the shared C++ code.
-- `scripts/`: shell helpers for demos, benchmarks, and batch processing workflows.
-- `data/`: stored inputs and outputs used by the project.
-- `data/raw/`: raw generated or collected outputs before cleanup.
-- `data/processed/`: parsed, rinsed, or benchmark-ready outputs.
-- `data/samples/`: small files for smoke tests and examples.
-- `data/archive/`: older retained outputs that are no longer part of the main workflow.
-- `docs/`: project notes and extended documentation moved out of the README.
-- `docs/notes/`: smaller supporting notes and scratch documentation.
-- `research/`: archived experiments, historical code snapshots, and Macaulay2 material.
-- `research/archive/`: legacy generated artifacts and old code snapshots.
-- `research/macaulay2/`: Macaulay2 scripts and benchmarking inputs.
-- `build/`: generated build artifacts created by `make`.
-- `build/bin/`: compiled executables.
-- `build/obj/`: compiled object files.
-- `.codex/`: Codex workspace metadata for this worktree.
+On a task-matched benchmark (same machine, same candidate families, same BEH/LLBC checks, program CPU time), the engine runs roughly **70–115× faster** than an equivalent Macaulay2 implementation, and completes searches Macaulay2 cannot: at large problem sizes Macaulay2 runs out of memory building the candidate list.
+
+| codim | sequences (`n`) | C++ | Macaulay2 | speedup |
+| ---: | ---: | ---: | ---: | ---: |
+| 5 | 1,221,759 | 0.88 s | 100.6 s | 114× |
+| 6 | 906,192 | 0.81 s | 93.1 s | 115× |
+| 7 | 1,184,040 | 1.79 s | 156.4 s | 87× |
+| 3 | 20,708,500 | 11.0 s | — (out of memory) | — |
+| 6 | 15,890,700 | 20.6 s | — (out of memory) | — |
+
+Full data across codimensions 3–7: [`data/processed/benchmarks/benchmark_results.csv`](data/processed/benchmarks/benchmark_results.csv). The "bad one" counts are identical across the C++ engine, Macaulay2's built-in `pureBetti`, and a Macaulay2 transcription of the same algorithm, so this is a same-task comparison, not same-answer-different-work.
+
+In the 2024 research campaign the engine swept on the order of tens of billions of degree sequences (codimension 3 out to degree 7,100), collecting counterexamples — a scale Macaulay2 cannot reach.
 
 ## Build
 
@@ -49,7 +48,7 @@ Build the default toolset from the repository root:
 make
 ```
 
-This includes the main binaries in `build/bin/`, including:
+This builds the main binaries in `build/bin/`, including:
 
 - `boij_soderberg_calculator`
 - `bad_one_generator`
@@ -79,12 +78,6 @@ make clean
 
 ## Quick Start
 
-Build the project:
-
-```bash
-make
-```
-
 Run the interactive calculator:
 
 ```bash
@@ -112,14 +105,12 @@ touch /tmp/unique_demo.txt
 ./build/bin/tell_which_violations /tmp/unique_demo.txt
 ```
 
-For the scripted interview walkthrough, see [docs/interview_demo.md](/mnt/c/Users/wolve/.codex/worktrees/1037/boij-soderberg-engine-repo/docs/interview_demo.md).
-
-## Main Tools/Algorithms
+## Main Tools / Algorithms
 
 Main executables:
 
 - `boij_soderberg_calculator`: interactive entry point for entering a degree sequence and seeing its pure Betti resolution, `L` value, `pi_i`, `B_i`, and BEH/LLBC status.
-- `bad_one_generator`: generates degree sequences in a search window and writes out those that fail one or both checks.
+- `bad_one_generator`: generates degree sequences in a search window and writes out those that fail one or both checks (full `pure_betti` + `test_BEH` + `test_LLBC` path).
 - `parse_huge_output`: extracts brace-form degree sequences from noisy merged outputs.
 - `remove_duplicates`: removes constant-multiple duplicates from a sequence list.
 - `tell_which_violations`: reports which `B_i` values fail BEH and whether LLBC fails.
@@ -128,15 +119,15 @@ Core algorithms and concepts:
 
 - **Degree sequence**: represented as `{0,d1,d2,...,dc}` with strictly increasing entries.
 - **Codimension `c`**: inferred as `sequence_length - 1`.
-- **Pure Betti sequence**: computed by `pure_betti(...)` in [src/seq_funcs.cc](/mnt/c/Users/wolve/.codex/worktrees/1037/boij-soderberg-engine-repo/src/seq_funcs.cc).
-- **BEH check**: `test_BEH(...)` compares Betti entries against binomial lower bounds.
+- **Pure Betti sequence**: computed by `pure_betti(...)` in `src/seq_funcs.cc` via a reformulation of the Herzog–Kühl equations.
+- **BEH check**: `test_BEH(...)` compares each Betti entry against its binomial lower bound.
 - **LLBC check**: `test_LLBC(...)` compares the total Betti sum against its lower bound.
 - **`L` value**: computed from the reduced `pi_i` denominators, used to scale a pure Betti table to integers.
 - **`pi_i` values**: rational factors associated to a degree sequence before clearing denominators.
 - **Bad ones**: degree sequences whose pure Betti data fail BEH, LLBC, or both.
 - **Rinsing/deduplication**: `gcd_rinse(...)` is a quick filter and `rinse_seqs(...)` removes constant-multiple duplicates more thoroughly.
 
-Detailed executable usage, scratch binaries, and development-facing tools are documented in [docs/cli_reference.md](/mnt/c/Users/wolve/.codex/worktrees/1037/boij-soderberg-engine-repo/docs/cli_reference.md).
+Detailed executable usage and development-facing tools are documented in [docs/cli_reference.md](docs/cli_reference.md).
 
 ## Data Format
 
@@ -152,4 +143,15 @@ Parsing expectations:
 - `parse_huge_output` scans for `{...}` patterns and extracts comma-separated integers.
 - Compact brace format with no spaces is the safest form for downstream tools such as `remove_duplicates`.
 
-Additional parsing notes, batch scripts, benchmark commands, and legacy workflow details are documented in [docs/batch_workflows.md](/mnt/c/Users/wolve/.codex/worktrees/1037/boij-soderberg-engine-repo/docs/batch_workflows.md).
+Additional parsing notes, batch scripts, and benchmark commands are documented in [docs/batch_workflows.md](docs/batch_workflows.md).
+
+## Repository Layout
+
+- `apps/` — executable entry points and one-off research drivers.
+- `src/` — shared implementation for sequence generation, Betti computations, checks, and utilities.
+- `include/` — headers for the shared C++ code.
+- `scripts/` — shell helpers for demos, benchmarks, and batch processing.
+- `data/` — stored inputs and outputs (`raw/`, `processed/`, `samples/`, `archive/`).
+- `docs/` — CLI reference and batch-workflow notes.
+- `research/` — archived experiments, historical code snapshots, and Macaulay2 material.
+- `build/` — generated build artifacts (`make`).
