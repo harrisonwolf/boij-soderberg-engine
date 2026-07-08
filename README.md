@@ -21,15 +21,15 @@ Historical outputs and research artifacts are kept in-repo for reproducibility. 
 
 ## Performance vs. Macaulay2
 
-On a task-matched benchmark (same machine, same candidate families, same BEH/LLBC checks, program CPU time), the engine runs roughly **70–115× faster** than an equivalent Macaulay2 implementation, and completes searches Macaulay2 cannot: at large problem sizes Macaulay2 runs out of memory building the candidate list.
+On a task-matched benchmark (same machine, same candidate families, same BEH/LLBC checks, program CPU time), the engine runs roughly **70–115× faster** than an equivalent Macaulay2 implementation, and at large problem sizes Macaulay2 becomes impractically slow — 17 minutes for a 20.7M search versus 11 seconds, and it had not finished a 15.9M search after 25 minutes. Because it must materialize the entire candidate list, it also eventually runs out of memory once that list outgrows RAM (as it did on the lighter hardware the 2024 research ran on).
 
 | codim | sequences (`n`) | C++ | Macaulay2 | speedup |
 | ---: | ---: | ---: | ---: | ---: |
 | 5 | 1,221,759 | 0.88 s | 100.6 s | 114× |
 | 6 | 906,192 | 0.81 s | 93.1 s | 115× |
 | 7 | 1,184,040 | 1.79 s | 156.4 s | 87× |
-| 3 | 20,708,500 | 11.0 s | — (out of memory) | — |
-| 6 | 15,890,700 | 20.6 s | — (out of memory) | — |
+| 3 | 20,708,500 | 11.0 s | 1,021 s (~17 min) | 93× |
+| 6 | 15,890,700 | 20.6 s | >25 min (unfinished) | — |
 
 Full data across codimensions 3–7: [`data/processed/benchmarks/benchmark_results.csv`](data/processed/benchmarks/benchmark_results.csv). The "bad one" counts are identical across the C++ engine, Macaulay2's built-in `pureBetti`, and a Macaulay2 transcription of the same algorithm, so this is a same-task comparison, not same-answer-different-work.
 
