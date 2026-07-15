@@ -1,0 +1,237 @@
+{
+  "artifacts": {
+    "checksums": "checksums.sha256",
+    "environment": "environment.json",
+    "records": "runs.jsonl",
+    "summary_csv": "summary.csv",
+    "summary_json": "summary.json",
+    "validation": "validation.json"
+  },
+  "binary": {
+    "path": "build/bin/benchmark_driver",
+    "sha256": "7689623aee1334eefb0a1979d1082e8c5f57169184a516e5086a9d9522eb339b"
+  },
+  "build_contract": {
+    "expected": {
+      "branch": "agent/boij-benchmark-studio",
+      "commit": "db8ace9789310857a019f8c84a2cf57aabae72f2",
+      "compiler_command": "g++",
+      "compiler_flags": "-O2 -Wall -Wextra -std=c++17",
+      "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+      "dirty": false,
+      "profile": "benchmark-release"
+    },
+    "passed": true,
+    "preflight_driver_build": {
+      "branch": "agent/boij-benchmark-studio",
+      "commit": "db8ace9789310857a019f8c84a2cf57aabae72f2",
+      "compiler_command": "g++",
+      "compiler_flags": "-O2 -Wall -Wextra -std=c++17",
+      "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+      "dirty": false,
+      "profile": "benchmark-release"
+    }
+  },
+  "bundle_kind": "boij_task_matched_benchmark_bundle",
+  "correctness_preflight": {
+    "case": {
+      "codimension": 7,
+      "id": "preflight-c7-d12-l1",
+      "lowbound": 1,
+      "max_degree": 12
+    },
+    "known_missed_by_legacy_transcription": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      11,
+      12
+    ],
+    "passed": true,
+    "record": {
+      "case": {
+        "codimension": 7,
+        "id": "preflight-c7-d12-l1",
+        "lowbound": 1,
+        "max_degree": 12
+      },
+      "case_id": "preflight-c7-d12-l1",
+      "engines": {
+        "cpp": {
+          "artifacts": {
+            "parsed_exact_results": "parsed/preflight-c7-d12-l1-cpp.json",
+            "resource_time": "logs/preflight-c7-d12-l1-cpp.time.txt",
+            "stderr": "logs/preflight-c7-d12-l1-cpp.stderr.txt",
+            "stdout": "logs/preflight-c7-d12-l1-cpp.stdout.txt"
+          },
+          "bad_sha256": "2986df3982a7bbe835df472cae90f61711c4db87416097c224ef7a115ba7f773",
+          "build": {
+            "branch": "agent/boij-benchmark-studio",
+            "commit": "db8ace9789310857a019f8c84a2cf57aabae72f2",
+            "compiler_command": "g++",
+            "compiler_flags": "-O2 -Wall -Wextra -std=c++17",
+            "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+            "dirty": false,
+            "profile": "benchmark-release"
+          },
+          "command": [
+            "build/bin/benchmark_driver",
+            "--codim=7",
+            "--max-degree=12",
+            "--lowbound=1"
+          ],
+          "counts": {
+            "bad": 28,
+            "candidates": 792,
+            "gcd_rinsed": 26
+          },
+          "exit_code": 0,
+          "failure_scope": null,
+          "gcd_rinsed_sha256": "5b9a3fee9c5a2c5dfd1b3b17723aee26a09c7934f863f0c2de7724a786f6748e",
+          "measurements": {
+            "external_wall_seconds": 0.026583209008094855,
+            "gnu_time_elapsed_seconds": 0.01,
+            "max_rss_kb": 4136,
+            "shared_cgroup_oom_kill_delta": null,
+            "system_seconds": 0.0,
+            "user_seconds": 0.0
+          },
+          "parse_error": null,
+          "program_phase_seconds": {
+            "gcd_rinse": 3.678e-06,
+            "generation": 0.0009205,
+            "testing": 0.005126595,
+            "total": 0.006050899
+          },
+          "shared_cgroup_oom_observation": null,
+          "status": "ok",
+          "timed_out": false
+        },
+        "m2": {
+          "artifacts": {
+            "parsed_exact_results": "parsed/preflight-c7-d12-l1-m2.json",
+            "resource_time": "logs/preflight-c7-d12-l1-m2.time.txt",
+            "stderr": "logs/preflight-c7-d12-l1-m2.stderr.txt",
+            "stdout": "logs/preflight-c7-d12-l1-m2.stdout.txt"
+          },
+          "bad_sha256": "2986df3982a7bbe835df472cae90f61711c4db87416097c224ef7a115ba7f773",
+          "build": null,
+          "command": [
+            "M2",
+            "--script",
+            "scripts/preflight-c7-d12-l1.m2"
+          ],
+          "counts": {
+            "bad": 28,
+            "candidates": 792,
+            "gcd_rinsed": 26
+          },
+          "exit_code": 0,
+          "failure_scope": null,
+          "gcd_rinsed_sha256": "5b9a3fee9c5a2c5dfd1b3b17723aee26a09c7934f863f0c2de7724a786f6748e",
+          "measurements": {
+            "external_wall_seconds": 0.5028796940023312,
+            "gnu_time_elapsed_seconds": 0.48,
+            "max_rss_kb": 100964,
+            "shared_cgroup_oom_kill_delta": null,
+            "system_seconds": 0.08,
+            "user_seconds": 0.4
+          },
+          "parse_error": null,
+          "program_phase_seconds": {
+            "gcd_rinse": 6.3322e-05,
+            "generation": 0.00289484,
+            "testing": 0.0937375
+          },
+          "shared_cgroup_oom_observation": null,
+          "status": "ok",
+          "timed_out": false
+        }
+      },
+      "equivalence": {
+        "bad_set_exact_match": true,
+        "candidate_count_matches_contract": true,
+        "gcd_rinsed_set_exact_match": true
+      },
+      "execution_order": [
+        "cpp",
+        "m2"
+      ],
+      "expected_candidate_count": 792,
+      "repetition": 0,
+      "schema_version": 1,
+      "status": "ok",
+      "timeout_seconds_per_engine": 120
+    }
+  },
+  "execution_policy": {
+    "alternating_engine_order": true,
+    "failure_classification": "timeout and error are process outcomes; a positive shared-cgroup oom_kill delta is only an unattributed concurrent observation, never proof that this process exhausted memory",
+    "paired_repetitions": 3,
+    "primary_timing": "external wall time from GNU time, paired on one machine",
+    "timeout_seconds_per_engine": 120
+  },
+  "finished_at_utc": "2026-07-15T18:56:48Z",
+  "macaulay2_oracle": {
+    "command": "M2",
+    "legacy_transcription_used": false,
+    "package": "BoijSoederberg",
+    "package_version": "1.5",
+    "per_run_command": [
+      "M2",
+      "--script",
+      "scripts/<case>-r<repetition>.m2"
+    ],
+    "template": "research/macaulay2/benchmark_builtin_task.m2.in",
+    "template_sha256": "46a1d07b4a28c01efa1425b7b1ebf7050f89760ce187e8a43ec7a1f0936acb1c",
+    "version": "1.22"
+  },
+  "profile": "smoke",
+  "profile_definition": {
+    "cases": [
+      {
+        "codimension": 3,
+        "id": "c3-d20-l1",
+        "lowbound": 1,
+        "max_degree": 20
+      },
+      {
+        "codimension": 7,
+        "id": "c7-d12-l1",
+        "lowbound": 1,
+        "max_degree": 12
+      }
+    ],
+    "repetitions": 3,
+    "timeout_seconds": 120
+  },
+  "repository": {
+    "branch": "agent/boij-benchmark-studio",
+    "commit": "db8ace9789310857a019f8c84a2cf57aabae72f2",
+    "dirty": false,
+    "working_diff_sha256": null
+  },
+  "run_count": 6,
+  "run_id": "20260715T185644Z-db8ace97-smoke",
+  "runner_command": [
+    "python3",
+    "benchmarks/run_benchmarks.py",
+    "--profile=smoke",
+    "--binary=build/bin/benchmark_driver",
+    "--compiler=g++",
+    "--compiler-flags=-O2 -Wall -Wextra -std=c++17",
+    "--m2=M2",
+    "--output-root=benchmarks/runs",
+    "--run-id=20260715T185644Z-db8ace97-smoke"
+  ],
+  "schema_version": 1,
+  "started_at_utc": "2026-07-15T18:56:44Z",
+  "status_counts": {
+    "ok": 6
+  },
+  "task_contract": "same materialized candidate family; pure Betti; explicit BEH-or-LLBC test; gcd rinse; exact canonical bad and rinsed set equality required",
+  "working_directory": "$REPO_ROOT"
+}
