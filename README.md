@@ -19,21 +19,25 @@ The ~1,200-line mathematical core — `src/seq_funcs.cc`, `src/test_funcs.cc`, `
 
 Historical outputs and research artifacts are kept in-repo for reproducibility. Longer operational notes, detailed CLI usage, and batch workflow material live in [docs/cli_reference.md](docs/cli_reference.md) and [docs/batch_workflows.md](docs/batch_workflows.md).
 
-## Performance vs. Macaulay2
+## Performance evidence
 
-On a task-matched benchmark (same machine, same candidate families, same BEH/LLBC checks, program CPU time), the engine runs roughly **70–115× faster** than an equivalent Macaulay2 implementation, and at large problem sizes Macaulay2 becomes impractically slow — 17 minutes for a 20.7M search versus 11 seconds, and it had not finished a 15.9M search after 25 minutes. Because it must materialize the entire candidate list, it also eventually runs out of memory once that list outgrows RAM (as it did on the lighter hardware the 2024 research ran on).
+The following values are **historical, single-run program-time measurements** preserved in `data/processed/benchmarks/benchmark_results.csv`. They are useful orientation, not publication-grade benchmark evidence: the historical table does not contain the command, machine, tool versions, raw logs, repetitions, or a seed (the task is deterministic). A blank memory cell means “not recorded,” not “out of memory.”
 
-| codim | sequences (`n`) | C++ | Macaulay2 | speedup |
+| codim | sequences (`n`) | historical C++ | historical Macaulay2 built-in | ratio |
 | ---: | ---: | ---: | ---: | ---: |
 | 5 | 1,221,759 | 0.88 s | 100.6 s | 114× |
 | 6 | 906,192 | 0.81 s | 93.1 s | 115× |
 | 7 | 1,184,040 | 1.79 s | 156.4 s | 87× |
 | 3 | 20,708,500 | 11.0 s | 1,021 s (~17 min) | 93× |
-| 6 | 15,890,700 | 20.6 s | >25 min (unfinished) | — |
+| 6 | 15,890,700 | 20.6 s | historical timeout at 25 min | — |
 
-Full data across codimensions 3–7: [`data/processed/benchmarks/benchmark_results.csv`](data/processed/benchmarks/benchmark_results.csv). The "bad one" counts are identical across the C++ engine, Macaulay2's built-in `pureBetti`, and a Macaulay2 transcription of the same algorithm, so this is a same-task comparison, not same-answer-different-work.
+Fresh runs use the evidence studio in [`benchmarks/`](benchmarks/README.md). It records the commit and compiler flags, machine and tool metadata, Macaulay2 and `BoijSoederberg` versions, commands, raw output, GNU `time` measurements, repeated paired runs with alternating order, exact result arrays, and checksums. A bundle is rejected unless C++ and Macaulay2 agree on every bad sequence and every gcd-rinsed sequence; matching counts alone is insufficient.
 
-In the 2024 research campaign the engine swept on the order of tens of billions of degree sequences (codimension 3 out to degree 7,100), collecting counterexamples — a scale Macaulay2 cannot reach.
+The task materializes its full candidate list, so memory grows with the candidate count. That fact predicts memory pressure; it does not prove a particular run exhausted RAM. The studio reports timeout, confirmed OOM, and other errors separately, and scopes any confirmed OOM to the recorded machine and run.
+
+Historical archive headers show a large 2024 batch campaign. They do not include the complete commands, low bounds, per-run manifests, or completion records needed to prove an exhaustive cumulative sweep. Accordingly, the portfolio-scale figure of about 59.6 billion should be described only as a combinatorial estimate or historical archive scale, not as a newly manifested completed sweep.
+
+The old standalone Macaulay2 transcription contained an unsound early-pass shortcut: for `{0,1,2,3,4,5,11,12}`, it treated `L >= binomial(7,3)` as sufficient even though the exact Betti vector `{42,252,616,770,495,132,2,1}` violates BEH at index 6 (`2 < 7`). That path now computes the full Betti vector and the comparison script requires exact set equality. Historical `m2port_*` columns predate this correction and should not support claims.
 
 ## Build
 

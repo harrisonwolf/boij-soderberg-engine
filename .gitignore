@@ -2,6 +2,10 @@
 /build/
 /dist/
 
+# Python tool caches
+__pycache__/
+*.py[cod]
+
 # C/C++ compilation artifacts
 *.o
 *.obj

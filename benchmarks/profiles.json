@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "smoke": {
+      "repetitions": 3,
+      "timeout_seconds": 120,
+      "cases": [
+        {"id": "c3-d20-l1", "codimension": 3, "max_degree": 20, "lowbound": 1},
+        {"id": "c7-d12-l1", "codimension": 7, "max_degree": 12, "lowbound": 1}
+      ]
+    },
+    "standard": {
+      "repetitions": 5,
+      "timeout_seconds": 300,
+      "cases": [
+        {"id": "c3-d60-l1", "codimension": 3, "max_degree": 60, "lowbound": 1},
+        {"id": "c5-d25-l1", "codimension": 5, "max_degree": 25, "lowbound": 1},
+        {"id": "c6-d20-l1", "codimension": 6, "max_degree": 20, "lowbound": 1},
+        {"id": "c7-d18-l1", "codimension": 7, "max_degree": 18, "lowbound": 1}
+      ]
+    },
+    "headline": {
+      "repetitions": 3,
+      "timeout_seconds": 1800,
+      "cases": [
+        {"id": "c3-d120-l1", "codimension": 3, "max_degree": 120, "lowbound": 1},
+        {"id": "c5-d45-l1", "codimension": 5, "max_degree": 45, "lowbound": 1},
+        {"id": "c6-d32-l1", "codimension": 6, "max_degree": 32, "lowbound": 1},
+        {"id": "c7-d24-l1", "codimension": 7, "max_degree": 24, "lowbound": 1}
+      ]
+    }
+  }
+}

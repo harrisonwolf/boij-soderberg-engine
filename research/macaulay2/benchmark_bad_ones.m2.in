@@ -1,5 +1,6 @@
 -- Standalone Macaulay2 benchmark for the bad-one search.
 -- This mirrors the C++ flow without relying on the historical BoijSoederberg package.
+-- The historical early-return shortcut is retained for audit context but is never used.
 
 CODIM = __CODIM__;
 MAXDEG = __MAXDEG__;
@@ -44,7 +45,7 @@ pureBettiCpp = (D) -> (
     apply(fractions, frac -> (L * (frac#0)) / (frac#1))
     );
 
-testConjsCpp = (D) -> (
+legacyShortcutUnsound = (D) -> (
     c := #D - 1;
     pis := {{ {1,1} }};
     for i from 1 to c do (
@@ -127,6 +128,19 @@ testConjsCpp = (D) -> (
     totalSum >= ((2^c) * 3 / 2)
     );
 
+testBEHExact = (B,c) -> (
+    all(toList(0..c), i -> B#i >= binomM2(c,i))
+    );
+
+testLLBCExact = (B,c) -> (
+    sum B >= (2^c * 3 / 2)
+    );
+
+isBadExact = (D,c) -> (
+    B := pureBettiCpp D;
+    not testBEHExact(B,c) or not testLLBCExact(B,c)
+    );
+
 gcdRinseCpp = (seqs) -> (
     select(seqs, seq -> gcd(seq#(#seq - 1), seq#(#seq - 2)) == 1)
     );
@@ -140,7 +154,7 @@ if MILESTONE_FILE =!= "" then (
     (openOut MILESTONE_FILE) << "Generation complete; starting BEH/LLBC tests on " << #possibleSeqs << " degree sequences" << endl << close;
     );
 testStartSecs := cpuTime();
-badOnes := select(possibleSeqs, seq -> not testConjsCpp(seq));
+badOnes := select(possibleSeqs, seq -> isBadExact(seq, CODIM));
 rinsedBadOnes := gcdRinseCpp(badOnes);
 totalSecs := genSecs + (cpuTime() - testStartSecs);
 

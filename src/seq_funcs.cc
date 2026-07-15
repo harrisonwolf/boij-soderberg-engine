@@ -11,8 +11,41 @@
 #include <sstream>
 #include <ctime>
 #include <climits> //for INT_MAX and others
+#include <limits>
+#include <stdexcept>
 #include "binom.h"
 using namespace std;
+
+namespace {
+
+long long checked_multiply_nonnegative(long long lhs, long long rhs, const char* context) {
+	if(lhs < 0 || rhs < 0){
+		throw invalid_argument(string(context) + " received a negative factor");
+	}
+	const __int128 product = static_cast<__int128>(lhs) * static_cast<__int128>(rhs);
+	if(product > numeric_limits<long long>::max()){
+		throw overflow_error(string(context) + " exceeds signed 64-bit range");
+	}
+	return static_cast<long long>(product);
+}
+
+long long checked_add_nonnegative(long long lhs, long long rhs, const char* context) {
+	if(lhs < 0 || rhs < 0){
+		throw invalid_argument(string(context) + " received a negative addend");
+	}
+	if(lhs > numeric_limits<long long>::max() - rhs){
+		throw overflow_error(string(context) + " exceeds signed 64-bit range");
+	}
+	return lhs + rhs;
+}
+
+long long checked_lcm_nonnegative(long long lhs, long long rhs, const char* context) {
+	if(lhs == 0 || rhs == 0) return 0;
+	const long long divisor = gcd(lhs, rhs);
+	return checked_multiply_nonnegative(lhs / divisor, rhs, context);
+}
+
+}
 
 void die(){
 	cout << "Bad input!\n";
@@ -182,8 +215,10 @@ vector<long long> pure_betti(vector<int> D){
 		long long den = 1;
 		for(int x: D){
 			if(x > 0 and x != D.at(i)){
-				num *= x; //make the numerator
-				den *= abs(x-D.at(i)); //make the denominator
+				num = checked_multiply_nonnegative(num, x, "pure_betti numerator");
+				const long long difference = llabs(
+					static_cast<long long>(x) - static_cast<long long>(D.at(i)));
+				den = checked_multiply_nonnegative(den, difference, "pure_betti denominator");
 			}
 		}
 		pi_vec.at(i) = pair<long long,long long>(num,den);
@@ -205,7 +240,7 @@ vector<long long> pure_betti(vector<int> D){
 //	cerr << "Finding L...\n";
 	long long L = 1; //find lcm of denoms
 	for(auto p: pi_vec){
-		long long curr_mult = lcm(L,p.second);
+		long long curr_mult = checked_lcm_nonnegative(L, p.second, "pure_betti denominator lcm");
 //		cerr << "L = " << L << ", curr_denom = " << p.second << endl;
 //		cerr << "lcm(L,curr_denom) = " << curr_mult << endl;
 		if(curr_mult > L) L = curr_mult;
@@ -216,7 +251,8 @@ vector<long long> pure_betti(vector<int> D){
 //	cerr << endl;
 	//mult the numerators by it
 	for(int i=0; i<c; i++){
-		pi_vec.at(i).first *= L;
+		pi_vec.at(i).first = checked_multiply_nonnegative(
+			pi_vec.at(i).first, L, "pure_betti scaled numerator");
 //		cerr << "pi_" << i << " numerator after mult. by L: " << pi_vec.at(i).first << endl;
 		//then divide by den and add the quotient to retvec
 		retvec.at(i) = pi_vec.at(i).first / pi_vec.at(i).second;
@@ -247,7 +283,7 @@ bool test_BEH(vector<long long> B){ //see if a potential betti sequence is a vio
 bool test_LLBC(vector<long long> B){
 	int c = B.size()-1;
 	long long sum = 0;
-	for(long long b: B) sum += b;
+	for(long long b: B) sum = checked_add_nonnegative(sum, b, "test_LLBC sum");
 	int target = pow(2,c)*3/2;
 
 	if(sum < target) return false;
@@ -431,7 +467,7 @@ bool test_conjs(vector<int> D){
         for(int i=1; i<=c; i++){ //for each pi (starting at 1 since pi_0 is just 1/1)
                 curr_L = 1; //reset curr L
                 for(int j=0; j<c-1; j++){ //for each factor of the denom
-                        curr_L = curr_L *= pis.at(i).at(j).second;
+                        curr_L *= pis.at(i).at(j).second;
                         //each lcm can only make L bigger, so I can actually check intermediately
                         if(curr_L >= target){
 //                              cerr << "An interim L hit " << curr_L << " which is > binom(c,c/2); both conjs autopass.\n";
