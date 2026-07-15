@@ -7,6 +7,7 @@ import json
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from run_benchmarks import (
     OVERFLOW_PROBE,
     SAFE_PROBE,
     normalize_cpp,
+    finalize_staged_bundle,
     normalize_m2,
     render_m2_script,
     sequence_hash,
@@ -47,7 +49,9 @@ class EngineRegressionTests(unittest.TestCase):
         self.assertEqual(json.loads(safe.stdout)["pure_betti"], [15, 28, 48, 35])
         overflow = self.run_driver(f"--probe-sequence={OVERFLOW_PROBE}")
         self.assertEqual(overflow.returncode, 4, overflow.stderr)
-        self.assertEqual(json.loads(overflow.stdout)["status"], "arithmetic_overflow")
+        overflow_payload = json.loads(overflow.stdout)
+        self.assertEqual(overflow_payload["status"], "arithmetic_overflow")
+        self.assertIn("pure_betti value", overflow_payload["error"])
 
     def test_builtin_m2_and_cpp_exact_sets_match_on_legacy_miss(self) -> None:
         if not self.m2:
@@ -109,6 +113,40 @@ class EngineRegressionTests(unittest.TestCase):
         for key in result:
             result[key] = sorted(result[key])
         return result
+
+
+class PublicationStagingTests(unittest.TestCase):
+    def test_only_validator_approved_eligible_bundles_are_published(self) -> None:
+        cases = (
+            ("approved", 0, True, True),
+            ("validator-rejected", 1, True, False),
+            ("failed-pair", 0, False, False),
+        )
+        for run_id, validator_exit, eligible, expected_published in cases:
+            with self.subTest(run_id=run_id), tempfile.TemporaryDirectory() as directory:
+                output_root = Path(directory)
+                staged = output_root / f".staging-{run_id}" / run_id
+                staged.mkdir(parents=True)
+                (staged / "marker.txt").write_text("complete", encoding="utf-8")
+                final = output_root / run_id
+                quarantine = output_root / "quarantine" / run_id
+                command = [
+                    sys.executable, "-c",
+                    f"import sys; sys.exit({validator_exit})",
+                ]
+
+                destination, published, observed_exit = finalize_staged_bundle(
+                    staged, final, quarantine, command, REPO, eligible
+                )
+
+                expected_destination = final if expected_published else quarantine
+                self.assertEqual(destination, expected_destination)
+                self.assertEqual(published, expected_published)
+                self.assertEqual(observed_exit, validator_exit)
+                self.assertTrue((expected_destination / "marker.txt").is_file())
+                self.assertEqual(final.exists(), expected_published)
+                self.assertEqual(quarantine.exists(), not expected_published)
+                self.assertFalse(staged.parent.exists())
 
 
 class ValidatorNegativeTests(unittest.TestCase):
@@ -185,7 +223,7 @@ class ValidatorNegativeTests(unittest.TestCase):
             "measurements": {
                 "external_wall_seconds": 0.1, "gnu_time_elapsed_seconds": 0.1,
                 "user_seconds": 0.1, "system_seconds": 0.0,
-                "max_rss_kb": 100, "cgroup_oom_kill_delta": 0,
+                "max_rss_kb": 100, "shared_cgroup_oom_kill_delta": 0,
             },
             "failure_scope": None, "parse_error": None, "counts": counts,
             "bad_sha256": parsed["bad_sha256"],

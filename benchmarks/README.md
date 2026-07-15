@@ -22,13 +22,15 @@ Every run starts with a `c=7,d=12,lowbound=1` correctness sentinel. It must prod
 - Order alternates by repetition to reduce order bias.
 - External wall time and peak RSS come from GNU `time`; internal phase times are diagnostic.
 - The summary uses medians over successful paired repetitions and preserves the planned, observed, and successful sample counts.
-- `timeout`, confirmed `oom`, and other `error` outcomes are separate. OOM requires a positive cgroup-v2 `oom_kill` counter delta. It is never inferred from a blank value, timeout, or signal alone, and applies only to that recorded machine/run.
+- Process outcomes are recorded as `timeout` or `error`. A positive shared-cgroup `oom_kill` counter delta is retained only as an unattributed concurrent observation; it is never proof that the measured process exhausted memory. A blank value, timeout, or signal also never proves OOM.
 - The task is deterministic, so no random seed is applicable; inputs and exact result arrays are recorded instead.
 
 The smoke profile has three repetitions and checks plumbing/correctness. Standard has five repetitions and is the default reporting profile. Headline has three larger repetitions with per-engine timeouts; run it only when its cost is intentional.
+
+The strict validator accepts only complete, all-success paired bundles. The runner validates under a hidden staging directory whose bundle basename already matches the run ID, then atomically moves an approved bundle into `benchmarks/runs/<run-id>`. A completed run with a failed pair or failed validator moves to `benchmarks/runs/quarantine/<run-id>` instead; incomplete staging data is deleted. Quarantined diagnostics are deliberately not publication evidence and are expected to fail the strict validator.
 ## Published evidence
 
-- [`20260715T180543Z-2e0daec3-smoke`](runs/20260715T180543Z-2e0daec3-smoke/) — clean commit `2e0daec3`, two cases, three paired repetitions per case, six of six successful pairs, and exact bad/gcd-rinsed result equality throughout.
+- [`20260715T180543Z-2e0daec3-smoke`](runs/20260715T180543Z-2e0daec3-smoke/) — pre-fix clean commit `2e0daec3`, two cases, three paired repetitions per case, six of six successful pairs, and exact bad/gcd-rinsed result equality throughout. It validates the benchmark driver’s exact task path, but predates consolidation of the public search helpers and is not evidence of repository-wide algorithm-suite health.
 
 Smoke evidence establishes the harness and small-case measurements on its recorded machine. It is not a substitute for the denser standard/research scaling profiles.
 
@@ -45,7 +47,7 @@ make benchmark-tools-test
 make benchmark-validate BUNDLE=benchmarks/runs/<run-id>
 ```
 
-The runner refuses a dirty repository unless `--allow-dirty` is supplied explicitly. That option exists for scratch diagnostics; the validator rejects dirty bundles by default, so committed evidence must come from a clean build whose embedded commit/compiler metadata matches the repository manifest.
+The benchmark make targets first require all 15 algorithm suites (300 fixture cases) plus the benchmark-tool tests to pass. The runner then refuses a dirty repository unless `--allow-dirty` is supplied explicitly. That option exists for scratch diagnostics; the validator rejects dirty bundles by default, so committed evidence must come from a clean build whose embedded commit/compiler metadata matches the repository manifest.
 
 Each immutable bundle contains:
 

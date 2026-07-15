@@ -96,20 +96,21 @@ $(BIN_DIR)/algorithm_test_driver: $(OBJ_DIR)/apps/algorithm_test_driver.o $(OBJ_
 $(BIN_DIR)/benchmark_driver: $(OBJ_DIR)/benchmark/benchmark_driver.o $(OBJ_DIR)/benchmark/seq_funcs.o $(OBJ_DIR)/benchmark/binom.o $(OBJ_DIR)/benchmark/algorithm_helpers.o | $(BIN_DIR)
 	$(CXX) $^ -o $@
 
-benchmark-smoke: $(BIN_DIR)/benchmark_driver
+benchmark-smoke: benchmark-tools-test
 	python3 benchmarks/run_benchmarks.py --profile=smoke --binary=$(BIN_DIR)/benchmark_driver --compiler=$(CXX) --compiler-flags='$(CXXFLAGS)'
 
-benchmark-standard: $(BIN_DIR)/benchmark_driver
+benchmark-standard: benchmark-tools-test
 	python3 benchmarks/run_benchmarks.py --profile=standard --binary=$(BIN_DIR)/benchmark_driver --compiler=$(CXX) --compiler-flags='$(CXXFLAGS)'
 
-benchmark-headline: $(BIN_DIR)/benchmark_driver
+benchmark-headline: benchmark-tools-test
 	python3 benchmarks/run_benchmarks.py --profile=headline --binary=$(BIN_DIR)/benchmark_driver --compiler=$(CXX) --compiler-flags='$(CXXFLAGS)'
 
 benchmark-validate:
 	@test -n "$(BUNDLE)" || (echo "Usage: make benchmark-validate BUNDLE=benchmarks/runs/<run-id>" >&2; exit 2)
 	python3 benchmarks/validate_bundle.py $(BUNDLE)
 
-benchmark-tools-test: $(BIN_DIR)/benchmark_driver
+benchmark-tools-test: $(BIN_DIR)/benchmark_driver $(BIN_DIR)/algorithm_test_driver
+	$(BIN_DIR)/algorithm_test_driver
 	python3 -m unittest discover -s benchmarks -p 'test_*.py'
 
 

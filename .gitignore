@@ -23,6 +23,10 @@ __pycache__/
 \#*\#
 .\#*
 *.swp
+# Local incomplete/quarantined benchmark diagnostics
+/benchmarks/runs/.staging-*/
+/benchmarks/runs/quarantine/
+
 *.swo
 
 # OS junk

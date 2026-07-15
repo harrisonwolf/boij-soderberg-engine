@@ -9,7 +9,8 @@ vector<vector<int>> find_bad_degree_sequences(int c, int d, int lowbound) {
 	vector<vector<int>> bad_ones;
 	vector<vector<int>> possibles = gen_deg_seqs(c, d, lowbound);
 	for(const vector<int>& curr_test_seq : possibles){
-		if(!test_conjs(curr_test_seq)){
+		const vector<long long> betti = pure_betti(curr_test_seq);
+		if(!test_BEH(betti) || !test_LLBC(betti)){
 			bad_ones.push_back(curr_test_seq);
 		}
 	}

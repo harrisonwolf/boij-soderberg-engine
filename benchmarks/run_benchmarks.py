@@ -24,9 +24,10 @@ from typing import Any
 
 
 SCHEMA_VERSION = 1
+# Exact B_4 is 14,043,766,264,500,157,900, so the final value exceeds int64.
 KNOWN_REGRESSION = [0, 1, 2, 3, 4, 5, 11, 12]
 SAFE_PROBE = "0,2,7,8"
-OVERFLOW_PROBE = "0,100000,200000,300000,400000,500000,600000,700000,800000,900000,1000000"
+OVERFLOW_PROBE = "0,127,357,426,456,490,799,932"
 
 
 def utc_now() -> str:
@@ -179,8 +180,8 @@ def parse_time_file(path: Path) -> dict[str, float | int | None]:
     return values
 
 
-def cgroup_oom_kill_count() -> int | None:
-    """Return the cgroup-v2 OOM-kill counter when the host exposes it."""
+def shared_cgroup_oom_kill_count() -> int | None:
+    """Return the shared cgroup-v2 OOM-kill counter when the host exposes it."""
     try:
         for line in Path("/sys/fs/cgroup/memory.events").read_text(encoding="utf-8").splitlines():
             key, raw = line.split()
@@ -194,7 +195,7 @@ def cgroup_oom_kill_count() -> int | None:
 def run_measured(
     command: list[str], cwd: Path, timeout_seconds: float,
     stdout_path: Path, stderr_path: Path, time_path: Path,
-) -> tuple[int | None, bool, bool, int | None, float]:
+) -> tuple[int | None, bool, int | None, float]:
     measured = [
         "/usr/bin/time", "-f",
         "elapsed_seconds=%e\nuser_seconds=%U\nsystem_seconds=%S\nmax_rss_kb=%M\nexit_code=%x",
@@ -202,7 +203,7 @@ def run_measured(
     ]
     environment = os.environ.copy()
     environment["LC_ALL"] = "C"
-    oom_before = cgroup_oom_kill_count()
+    oom_before = shared_cgroup_oom_kill_count()
     started = time.perf_counter()
     process = subprocess.Popen(
         measured, cwd=cwd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -221,18 +222,15 @@ def run_measured(
             stdout, stderr = process.communicate()
     external_wall = time.perf_counter() - started
     stdout_path.write_text(stdout, encoding="utf-8")
-    oom_after = cgroup_oom_kill_count()
+    oom_after = shared_cgroup_oom_kill_count()
     oom_kill_delta = (
         oom_after - oom_before if oom_before is not None and oom_after is not None else None
-    )
-    oom_confirmed = (
-        not timed_out and process.returncode not in (None, 0)
-        and oom_kill_delta is not None and oom_kill_delta > 0
     )
     stderr_path.write_text(stderr, encoding="utf-8")
     if not time_path.exists():
         time_path.write_text("", encoding="utf-8")
-    return (None if timed_out else process.returncode), timed_out, oom_confirmed, oom_kill_delta, external_wall
+    return ((None if timed_out else process.returncode), timed_out,
+            oom_kill_delta, external_wall)
 
 
 def canonical_sequences(raw: Any, label: str) -> list[list[int]]:
@@ -369,15 +367,11 @@ def run_engine(
         script_path.write_text(render_m2_script(template, case), encoding="utf-8")
         command = [m2_binary, "--script", str(script_path)]
         recorded_command = ["M2", "--script", script_path.relative_to(partial).as_posix()]
-    exit_code, timed_out, oom_confirmed, oom_kill_delta, wall = run_measured(
+    exit_code, timed_out, oom_kill_delta, wall = run_measured(
         command, repo, timeout_seconds, stdout_path, stderr_path, time_path
     )
     time_values = parse_time_file(time_path)
-    status = (
-        "timeout" if timed_out else
-        "oom" if oom_confirmed else
-        "ok" if exit_code == 0 else "error"
-    )
+    status = "timeout" if timed_out else "ok" if exit_code == 0 else "error"
     parse_error = None
     normalized = None
     if status == "ok":
@@ -405,9 +399,13 @@ def run_engine(
             "user_seconds": time_values["user_seconds"],
             "system_seconds": time_values["system_seconds"],
             "max_rss_kb": time_values["max_rss_kb"],
-            "cgroup_oom_kill_delta": oom_kill_delta,
+            "shared_cgroup_oom_kill_delta": oom_kill_delta,
         },
         "parse_error": parse_error,
+        "shared_cgroup_oom_observation": (
+            "shared cgroup oom_kill event observed; process attribution is unavailable"
+            if oom_kill_delta is not None and oom_kill_delta > 0 else None
+        ),
         "counts": normalized.get("counts") if normalized else None,
         "bad_sha256": normalized.get("bad_sha256") if normalized else None,
         "gcd_rinsed_sha256": normalized.get("gcd_rinsed_sha256") if normalized else None,
@@ -560,6 +558,20 @@ def write_checksums(bundle: Path) -> None:
     )
 
 
+def finalize_staged_bundle(
+    staged_bundle: Path, final: Path, quarantine: Path,
+    validation_command: list[str], cwd: Path, publication_eligible: bool,
+) -> tuple[Path, bool, int]:
+    """Validate in staging, then atomically publish or quarantine the bundle."""
+    completed = subprocess.run(validation_command, cwd=cwd)
+    published = completed.returncode == 0 and publication_eligible
+    destination = final if published else quarantine
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    staged_bundle.rename(destination)
+    staged_bundle.parent.rmdir()
+    return destination, published, completed.returncode
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile", choices=("smoke", "standard", "headline"), default="smoke")
@@ -604,8 +616,10 @@ def main() -> int:
     if not re.fullmatch(r"[A-Za-z0-9._-]+", run_id):
         parser.error("--run-id contains unsupported characters")
     final = output_root / run_id
-    partial = output_root / f".{run_id}.partial-{os.getpid()}"
-    if final.exists() or partial.exists():
+    quarantine = output_root / "quarantine" / run_id
+    staging_root = output_root / f".staging-{run_id}-{os.getpid()}"
+    partial = staging_root / run_id
+    if final.exists() or quarantine.exists() or staging_root.exists():
         parser.error("refusing to overwrite an existing bundle")
     for directory in (partial / "logs", partial / "parsed", partial / "scripts", partial / "preflight"):
         directory.mkdir(parents=True, exist_ok=True)
@@ -656,7 +670,6 @@ def main() -> int:
             "correctness_preflight_passed": regression_passed,
             "known_regression_sequence": KNOWN_REGRESSION,
             "safe_and_overflow_probes": probes,
-            "unrelated_algorithm_test_failures_masked": False,
         }
         write_json(partial / "validation.json", validation)
         manifest = {
@@ -684,7 +697,7 @@ def main() -> int:
                 "alternating_engine_order": True,
                 "timeout_seconds_per_engine": profile["timeout_seconds"],
                 "primary_timing": "external wall time from GNU time, paired on one machine",
-                "failure_classification": "timeout/OOM/error are separate; OOM requires a positive cgroup oom_kill counter delta and is scoped to this recorded machine/run; a blank cell, timeout, or signal alone never proves OOM",
+                "failure_classification": "timeout and error are process outcomes; a positive shared-cgroup oom_kill delta is only an unattributed concurrent observation, never proof that this process exhausted memory",
             },
             "correctness_preflight": {
                 "case": regression_case,
@@ -712,18 +725,20 @@ def main() -> int:
         if sha256_file(binary) != manifest["binary"]["sha256"]:
             raise RuntimeError("benchmark binary changed during the run")
         write_checksums(partial)
-        partial.rename(final)
+        validation_command = [
+            sys.executable, str(benchmark_dir / "validate_bundle.py"), str(partial)
+        ]
+        if args.allow_dirty:
+            validation_command.append("--allow-dirty")
+        destination, published, _ = finalize_staged_bundle(
+            partial, final, quarantine, validation_command, repo, all_pairs_ok
+        )
+        print(destination)
+        return 0 if published else 1
     except BaseException:
-        if partial.exists():
-            shutil.rmtree(partial)
+        if staging_root.exists():
+            shutil.rmtree(staging_root)
         raise
-
-    validation_command = [sys.executable, str(benchmark_dir / "validate_bundle.py"), str(final)]
-    if args.allow_dirty:
-        validation_command.append("--allow-dirty")
-    completed = subprocess.run(validation_command, cwd=repo)
-    print(final)
-    return 0 if completed.returncode == 0 and all(record["status"] == "ok" for record in records) else 1
 
 
 if __name__ == "__main__":
