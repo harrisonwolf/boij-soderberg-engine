@@ -43,11 +43,24 @@ The following values are **historical, single-run program-time measurements** pr
 
 Fresh runs use the evidence studio in [`benchmarks/`](benchmarks/README.md). It records the commit and compiler flags, machine and tool metadata, Macaulay2 and `BoijSoederberg` versions, commands, raw output, GNU `time` measurements, repeated paired runs with alternating order, exact result arrays, and checksums. A bundle is rejected unless C++ and Macaulay2 agree on every bad sequence and every gcd-rinsed sequence; matching counts alone is insufficient.
 
-The first clean, independently rerun bundle is [`20260715T180543Z-2e0daec3-smoke`](benchmarks/runs/20260715T180543Z-2e0daec3-smoke/). It is a six-pair, pre-fix smoke/calibration run tied to commit `2e0daec3`: it validates the exact benchmark-driver path, but predates consolidation of the public search helpers and is not evidence that the full algorithm suite was green. Use its metric-specific, machine-scoped medians rather than extrapolating it to larger cases.
+The primary publication bundles are the five-repetition [`standard`](benchmarks/runs/20260715T191057Z-17b2b12c-standard/) campaign (20/20 successful pairs) and the larger three-repetition [`headline`](benchmarks/runs/20260715T191425Z-a65064aa-headline/) campaign (12/12 successful pairs). On the headline bundle's recorded Intel Core Ultra 9 275HX / WSL2 environment, the end-to-end external-wall medians were:
+
+| codim | candidates | C++ median | Macaulay2 median | wall speedup |
+| ---: | ---: | ---: | ---: | ---: |
+| 3 | 280,840 | 0.222 s | 14.205 s | 63.9× |
+| 5 | 1,221,759 | 2.542 s | 94.239 s | 37.1× |
+| 6 | 906,192 | 2.661 s | 87.858 s | 33.0× |
+| 7 | 346,104 | 1.466 s | 46.464 s | 31.7× |
+
+These are machine- and case-scoped medians, not a universal speedup. The bundles retain every raw timing and RSS record, alternating order, exact outputs, environment metadata, and checksum. The task is deterministic, so no random seed applies.
+
+The earlier [`20260715T180543Z-2e0daec3-smoke`](benchmarks/runs/20260715T180543Z-2e0daec3-smoke/) bundle is retained as pre-fix harness calibration only. The post-fix [`20260715T185644Z-db8ace97-smoke`](benchmarks/runs/20260715T185644Z-db8ace97-smoke/) bundle verifies the corrected exact path on six small pairs.
 
 The task materializes its full candidate list, so memory grows with the candidate count. That fact predicts memory pressure; it does not prove a particular run exhausted RAM. The studio records process timeouts and errors. A positive shared-cgroup `oom_kill` delta is only an unattributed concurrent observation, never proof that the measured process exhausted memory. Only complete, all-success bundles pass the strict validator; completed failures are quarantined as diagnostics rather than published as evidence.
 
-Historical archive headers show a large 2024 batch campaign. They do not include the complete commands, low bounds, per-run manifests, or completion records needed to prove an exhaustive cumulative sweep. Accordingly, the portfolio-scale figure of about 59.6 billion should be described only as a combinatorial estimate or historical archive scale, not as a newly manifested completed sweep.
+For codimension 3 and `lowbound=1`, degree 7,100 corresponds exactly to `binomial(7100,3) = 59,626,630,700` candidates. That is a combinatorial count, not a measured completion record. The archive contains result-block headers through 7,100 and beyond, and the imported history contains a 50-degree slicing script, but the blocks omit low bounds, commands, timestamps, build identity, and per-slice validation. A dated per-slice artifact named `burn7050-7100.txt` is zero bytes. The repository therefore does not establish a contiguous completed 59.6-billion sweep.
+
+The slice design permits a human to restart at a slice boundary; it is not checkpoint/resume. It neither persists intra-slice state nor automatically verifies and skips completed slices. Portfolio wording should say “historical sliced campaign” only if that distinction is useful, and should not say that resumability or a manifested 59.6-billion completion has been demonstrated.
 
 The old standalone Macaulay2 transcription contained an unsound early-pass shortcut: for `{0,1,2,3,4,5,11,12}`, it treated `L >= binomial(7,3)` as sufficient even though the exact Betti vector `{42,252,616,770,495,132,2,1}` violates BEH at index 6 (`2 < 7`). The standalone path, public search helpers, and diagnostics now all compute the full Betti vector and apply explicit BEH/LLBC checks; the comparison script requires exact set equality. Regression fixtures lock the codimension-1 LLBC failures `{0,1}` and `{0,2}` plus the `c=4,d=9` search member `{0,1,2,8,9}`. Historical `m2port_*` columns predate this correction and should not support claims.
 

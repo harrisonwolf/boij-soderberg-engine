@@ -31,9 +31,12 @@ The strict validator accepts only complete, all-success paired bundles. The runn
 
 ## Published evidence
 
-- [`20260715T180543Z-2e0daec3-smoke`](runs/20260715T180543Z-2e0daec3-smoke/) — pre-fix clean commit `2e0daec3`, two cases, three paired repetitions per case, six of six successful pairs, and exact bad/gcd-rinsed result equality throughout. It validates the benchmark driver’s exact task path, but predates consolidation of the public search helpers and is not evidence of repository-wide algorithm-suite health.
+- [`20260715T191425Z-a65064aa-headline`](runs/20260715T191425Z-a65064aa-headline/) — current large-case publication bundle: four cases, three paired repetitions per case, 12/12 successful pairs, and exact bad/gcd-rinsed equality throughout.
+- [`20260715T191057Z-17b2b12c-standard`](runs/20260715T191057Z-17b2b12c-standard/) — current default reporting bundle: four cases, five paired repetitions per case, 20/20 successful pairs, and exact equality throughout.
+- [`20260715T185644Z-db8ace97-smoke`](runs/20260715T185644Z-db8ace97-smoke/) — post-fix small-case bundle: two cases, three paired repetitions per case, 6/6 successful pairs.
+- [`20260715T180543Z-2e0daec3-smoke`](runs/20260715T180543Z-2e0daec3-smoke/) — pre-fix harness calibration retained for provenance; do not use it as repository-wide correctness evidence.
 
-Smoke evidence establishes the harness and small-case measurements on its recorded machine. It is not a substitute for the denser standard/research scaling profiles.
+Use the standard or headline bundle for reporting. Smoke evidence establishes the harness and small-case measurements only.
 
 
 ## Run and validate
@@ -48,7 +51,7 @@ make benchmark-tools-test
 make benchmark-validate BUNDLE=benchmarks/runs/<run-id>
 ```
 
-The benchmark make targets first require all 15 algorithm suites (300 fixture cases) plus the benchmark-tool tests to pass. The runner then refuses a dirty repository unless `--allow-dirty` is supplied explicitly. That option exists for scratch diagnostics; the validator rejects dirty bundles by default, so committed evidence must come from a clean build whose embedded commit/compiler metadata matches the repository manifest.
+The benchmark make targets first require all 16 algorithm suites (308 substantive cases, with legacy/experimental suites labeled as such) plus the benchmark-tool tests to pass. The runner then refuses a dirty repository unless `--allow-dirty` is supplied explicitly. That option exists for scratch diagnostics; the validator rejects dirty bundles by default, so committed evidence must come from a clean build whose embedded commit/compiler metadata matches the repository manifest.
 
 Each immutable bundle contains:
 
