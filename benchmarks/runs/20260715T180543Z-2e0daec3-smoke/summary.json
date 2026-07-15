@@ -1,0 +1,51 @@
+{
+  "cases": [
+    {
+      "bad_count": 16,
+      "case_id": "c3-d20-l1",
+      "cpp_external_wall_median_seconds": 0.015294647004338913,
+      "cpp_max_rss_median_kb": 4324.0,
+      "input": {
+        "codimension": 3,
+        "id": "c3-d20-l1",
+        "lowbound": 1,
+        "max_degree": 20
+      },
+      "m2_external_wall_median_seconds": 0.3172545749985147,
+      "m2_max_rss_median_kb": 100504.0,
+      "planned_repetitions": 3,
+      "status_counts": {
+        "ok": 3
+      },
+      "successful_repetitions": 3,
+      "wall_speedup_m2_over_cpp": 20.74285041743777
+    },
+    {
+      "bad_count": 28,
+      "case_id": "c7-d12-l1",
+      "cpp_external_wall_median_seconds": 0.01187885100080166,
+      "cpp_max_rss_median_kb": 4460.0,
+      "input": {
+        "codimension": 7,
+        "id": "c7-d12-l1",
+        "lowbound": 1,
+        "max_degree": 12
+      },
+      "m2_external_wall_median_seconds": 0.36022169000352733,
+      "m2_max_rss_median_kb": 100748.0,
+      "planned_repetitions": 3,
+      "status_counts": {
+        "ok": 3
+      },
+      "successful_repetitions": 3,
+      "wall_speedup_m2_over_cpp": 30.324623987557153
+    }
+  ],
+  "sample_accounting": {
+    "observed_pair_count": 6,
+    "planned_pair_count": 6,
+    "successful_pair_count": 6
+  },
+  "schema_version": 1,
+  "statistic_policy": "median over successful paired repetitions; execution order alternates"
+}

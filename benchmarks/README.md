@@ -26,6 +26,12 @@ Every run starts with a `c=7,d=12,lowbound=1` correctness sentinel. It must prod
 - The task is deterministic, so no random seed is applicable; inputs and exact result arrays are recorded instead.
 
 The smoke profile has three repetitions and checks plumbing/correctness. Standard has five repetitions and is the default reporting profile. Headline has three larger repetitions with per-engine timeouts; run it only when its cost is intentional.
+## Published evidence
+
+- [`20260715T180543Z-2e0daec3-smoke`](runs/20260715T180543Z-2e0daec3-smoke/) — clean commit `2e0daec3`, two cases, three paired repetitions per case, six of six successful pairs, and exact bad/gcd-rinsed result equality throughout.
+
+Smoke evidence establishes the harness and small-case measurements on its recorded machine. It is not a substitute for the denser standard/research scaling profiles.
+
 
 ## Run and validate
 

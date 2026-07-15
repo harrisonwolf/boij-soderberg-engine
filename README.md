@@ -33,6 +33,8 @@ The following values are **historical, single-run program-time measurements** pr
 
 Fresh runs use the evidence studio in [`benchmarks/`](benchmarks/README.md). It records the commit and compiler flags, machine and tool metadata, Macaulay2 and `BoijSoederberg` versions, commands, raw output, GNU `time` measurements, repeated paired runs with alternating order, exact result arrays, and checksums. A bundle is rejected unless C++ and Macaulay2 agree on every bad sequence and every gcd-rinsed sequence; matching counts alone is insufficient.
 
+The first clean, independently rerun bundle is [`20260715T180543Z-2e0daec3-smoke`](benchmarks/runs/20260715T180543Z-2e0daec3-smoke/). It is a six-pair smoke/calibration run tied to commit `2e0daec3`; use its metric-specific, machine-scoped medians rather than extrapolating it to larger cases.
+
 The task materializes its full candidate list, so memory grows with the candidate count. That fact predicts memory pressure; it does not prove a particular run exhausted RAM. The studio reports timeout, confirmed OOM, and other errors separately, and scopes any confirmed OOM to the recorded machine and run.
 
 Historical archive headers show a large 2024 batch campaign. They do not include the complete commands, low bounds, per-run manifests, or completion records needed to prove an exhaustive cumulative sweep. Accordingly, the portfolio-scale figure of about 59.6 billion should be described only as a combinatorial estimate or historical archive scale, not as a newly manifested completed sweep.
