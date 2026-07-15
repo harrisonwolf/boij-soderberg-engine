@@ -1,0 +1,91 @@
+{
+  "cases": [
+    {
+      "bad_count": 117,
+      "case_id": "c3-d120-l1",
+      "cpp_external_wall_median_seconds": 0.22662852100620512,
+      "cpp_max_rss_median_kb": 39552.0,
+      "input": {
+        "codimension": 3,
+        "id": "c3-d120-l1",
+        "lowbound": 1,
+        "max_degree": 120
+      },
+      "m2_external_wall_median_seconds": 13.96259305300191,
+      "m2_max_rss_median_kb": 156400.0,
+      "planned_repetitions": 3,
+      "status_counts": {
+        "ok": 3
+      },
+      "successful_repetitions": 3,
+      "wall_speedup_m2_over_cpp": 61.61004356825685
+    },
+    {
+      "bad_count": 140,
+      "case_id": "c5-d45-l1",
+      "cpp_external_wall_median_seconds": 4.087358370001311,
+      "cpp_max_rss_median_kb": 156100.0,
+      "input": {
+        "codimension": 5,
+        "id": "c5-d45-l1",
+        "lowbound": 1,
+        "max_degree": 45
+      },
+      "m2_external_wall_median_seconds": 87.5938173399918,
+      "m2_max_rss_median_kb": 482300.0,
+      "planned_repetitions": 3,
+      "status_counts": {
+        "ok": 3
+      },
+      "successful_repetitions": 3,
+      "wall_speedup_m2_over_cpp": 21.430422637485467
+    },
+    {
+      "bad_count": 147,
+      "case_id": "c6-d32-l1",
+      "cpp_external_wall_median_seconds": 2.7851789470005315,
+      "cpp_max_rss_median_kb": 116656.0,
+      "input": {
+        "codimension": 6,
+        "id": "c6-d32-l1",
+        "lowbound": 1,
+        "max_degree": 32
+      },
+      "m2_external_wall_median_seconds": 78.98475674400106,
+      "m2_max_rss_median_kb": 398152.0,
+      "planned_repetitions": 3,
+      "status_counts": {
+        "ok": 3
+      },
+      "successful_repetitions": 3,
+      "wall_speedup_m2_over_cpp": 28.358952242211526
+    },
+    {
+      "bad_count": 110,
+      "case_id": "c7-d24-l1",
+      "cpp_external_wall_median_seconds": 1.3784714119974524,
+      "cpp_max_rss_median_kb": 54220.0,
+      "input": {
+        "codimension": 7,
+        "id": "c7-d24-l1",
+        "lowbound": 1,
+        "max_degree": 24
+      },
+      "m2_external_wall_median_seconds": 40.41573776501173,
+      "m2_max_rss_median_kb": 199484.0,
+      "planned_repetitions": 3,
+      "status_counts": {
+        "ok": 3
+      },
+      "successful_repetitions": 3,
+      "wall_speedup_m2_over_cpp": 29.319242614141658
+    }
+  ],
+  "sample_accounting": {
+    "observed_pair_count": 12,
+    "planned_pair_count": 12,
+    "successful_pair_count": 12
+  },
+  "schema_version": 1,
+  "statistic_policy": "median over successful paired repetitions; execution order alternates; external_wall_seconds is Python time.perf_counter around the complete GNU-time-wrapped child command; gnu_time_elapsed_seconds is the separate coarser GNU %e field; max_rss_kb is GNU %M"
+}

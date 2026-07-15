@@ -1,0 +1,150 @@
+{
+  "bad_sequences": [
+    [
+      0,
+      1,
+      2,
+      3
+    ],
+    [
+      0,
+      1,
+      3,
+      4
+    ],
+    [
+      0,
+      1,
+      5,
+      6
+    ],
+    [
+      0,
+      2,
+      4,
+      6
+    ],
+    [
+      0,
+      2,
+      6,
+      8
+    ],
+    [
+      0,
+      2,
+      10,
+      12
+    ],
+    [
+      0,
+      3,
+      5,
+      8
+    ],
+    [
+      0,
+      3,
+      6,
+      9
+    ],
+    [
+      0,
+      3,
+      9,
+      12
+    ],
+    [
+      0,
+      3,
+      15,
+      18
+    ],
+    [
+      0,
+      4,
+      8,
+      12
+    ],
+    [
+      0,
+      4,
+      12,
+      16
+    ],
+    [
+      0,
+      5,
+      10,
+      15
+    ],
+    [
+      0,
+      5,
+      15,
+      20
+    ],
+    [
+      0,
+      6,
+      10,
+      16
+    ],
+    [
+      0,
+      6,
+      12,
+      18
+    ]
+  ],
+  "bad_sha256": "b9487a199bbb133763a4fcfd287557cb79cd6e7d75e421ff5dc98c6d869eb8d2",
+  "counts": {
+    "bad": 16,
+    "candidates": 1140,
+    "gcd_rinsed": 4
+  },
+  "engine": "macaulay2_builtin",
+  "gcd_rinsed_sequences": [
+    [
+      0,
+      1,
+      2,
+      3
+    ],
+    [
+      0,
+      1,
+      3,
+      4
+    ],
+    [
+      0,
+      1,
+      5,
+      6
+    ],
+    [
+      0,
+      3,
+      5,
+      8
+    ]
+  ],
+  "gcd_rinsed_sha256": "293cb39d749c0d553181f95890bab9b503842cbcf9c6cb7e774c6317967d4010",
+  "oracle": {
+    "package": "BoijSoederberg",
+    "package_version": "1.5"
+  },
+  "phase_cpu_seconds": {
+    "gcd_rinse": 4.0797e-05,
+    "generation": 0.0012063,
+    "testing": 0.0627029
+  },
+  "schema_version": 1,
+  "task": {
+    "codimension": 3,
+    "id": "c3-d20-l1",
+    "lowbound": 1,
+    "max_degree": 20
+  }
+}

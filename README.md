@@ -43,18 +43,20 @@ The following values are **historical, single-run program-time measurements** pr
 
 Fresh runs use the evidence studio in [`benchmarks/`](benchmarks/README.md). It records the commit and compiler flags, machine and tool metadata, Macaulay2 and `BoijSoederberg` versions, commands, raw output, repeated paired runs with alternating order, exact result arrays, and checksums. `external_wall_seconds` is measured with Python's monotonic `time.perf_counter` around the complete GNU-`time`-wrapped child command. GNU `time` `%e` is retained separately as a coarser wall-clock cross-check, and `%M` supplies peak RSS. A bundle is rejected unless C++ and Macaulay2 agree on every bad sequence and every gcd-rinsed sequence; matching counts alone is insufficient.
 
-The former five-repetition [`standard`](benchmarks/runs/20260715T191057Z-17b2b12c-standard/) campaign (20/20 successful pairs) and three-repetition [`headline`](benchmarks/runs/20260715T191425Z-a65064aa-headline/) campaign (12/12 successful pairs) are retained byte-for-byte but superseded for publication. Their recorded values recompute from `runs.jsonl`; they are not known to be numerically wrong. New immutable runs are required because the timing-boundary wording and independent summary-recomputation gate were corrected after these bundles were captured. On the superseded headline bundle's recorded Intel Core Ultra 9 275HX / WSL2 environment, the end-to-end external-wall medians were:
+Current publication evidence was captured from clean source commit `b2a9bfb8f684ca7c17c49096ac872f7902c613f3`, after the timing boundary and independent summary-recomputation gate were corrected. The five-repetition [`standard`](benchmarks/runs/20260715T202451Z-b2a9bfb8-standard/) campaign completed 20/20 pairs, the three-repetition [`headline`](benchmarks/runs/20260715T202630Z-b2a9bfb8-headline/) campaign completed 12/12 pairs, and the [`smoke`](benchmarks/runs/20260715T202431Z-b2a9bfb8-smoke/) campaign completed 6/6 pairs. Every pair passed exact bad-sequence and gcd-rinsed-sequence equality.
 
-| codim | candidates | C++ median | Macaulay2 median | wall speedup |
-| ---: | ---: | ---: | ---: | ---: |
-| 3 | 280,840 | 0.222 s | 14.205 s | 63.9× |
-| 5 | 1,221,759 | 2.542 s | 94.239 s | 37.1× |
-| 6 | 906,192 | 2.661 s | 87.858 s | 33.0× |
-| 7 | 346,104 | 1.466 s | 46.464 s | 31.7× |
+On the headline bundle's recorded Intel Core Ultra 9 275HX / WSL2 environment, the end-to-end external-wall and peak-RSS medians were:
 
-These are machine- and case-scoped medians, not a universal speedup. The bundles retain every timing and RSS record, alternating order, exact outputs, environment metadata, and checksum. The task is deterministic, so no random seed applies. Treat these figures as a superseded audit trail until replacement bundles are published.
+| codim | candidates | C++ median | Macaulay2 median | wall speedup | C++ RSS | Macaulay2 RSS |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 3 | 280,840 | 0.227 s | 13.963 s | 61.6× | 39,552 KiB | 156,400 KiB |
+| 5 | 1,221,759 | 4.087 s | 87.594 s | 21.4× | 156,100 KiB | 482,300 KiB |
+| 6 | 906,192 | 2.785 s | 78.985 s | 28.4× | 116,656 KiB | 398,152 KiB |
+| 7 | 346,104 | 1.378 s | 40.416 s | 29.3× | 54,220 KiB | 199,484 KiB |
 
-The earlier [`20260715T180543Z-2e0daec3-smoke`](benchmarks/runs/20260715T180543Z-2e0daec3-smoke/) bundle is retained as pre-fix harness calibration only. The post-fix [`20260715T185644Z-db8ace97-smoke`](benchmarks/runs/20260715T185644Z-db8ace97-smoke/) bundle verifies the corrected exact path on six small pairs.
+These are machine- and case-scoped medians, not universal speedups. The bundles retain every timing and RSS record, alternating order, exact outputs, environment metadata, and checksum. The task is deterministic, so no random seed applies.
+
+The earlier [`standard`](benchmarks/runs/20260715T191057Z-17b2b12c-standard/), [`headline`](benchmarks/runs/20260715T191425Z-a65064aa-headline/), post-fix [`smoke`](benchmarks/runs/20260715T185644Z-db8ace97-smoke/), and pre-fix [`smoke`](benchmarks/runs/20260715T180543Z-2e0daec3-smoke/) bundles remain byte-for-byte for provenance but are superseded for publication. Their recorded observations are not known to be numerically wrong; they predate the corrected evidence contract or its final validation gate.
 
 The task materializes its full candidate list, so memory grows with the candidate count. That fact predicts memory pressure; it does not prove a particular run exhausted RAM. The studio records process timeouts and errors. A positive shared-cgroup `oom_kill` delta is only an unattributed concurrent observation, never proof that the measured process exhausted memory. Only complete, all-success bundles pass the strict validator; completed failures are quarantined as diagnostics rather than published as evidence.
 

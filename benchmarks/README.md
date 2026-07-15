@@ -29,16 +29,20 @@ The smoke profile has three repetitions and checks plumbing/correctness. Standar
 
 The strict validator accepts only complete, all-success paired bundles. The runner validates under a hidden staging directory whose bundle basename already matches the run ID, then atomically moves an approved bundle into `benchmarks/runs/<run-id>`. A completed run with a failed pair or failed validator moves to `benchmarks/runs/quarantine/<run-id>` instead; incomplete staging data is deleted. Quarantined diagnostics are deliberately not publication evidence and are expected to fail the strict validator.
 
-## Retained evidence status
+## Current and retained evidence
 
-The existing bundles remain byte-for-byte unchanged, but all predate the corrected timing-boundary wording and independent summary-recomputation gate. They are therefore superseded for publication. This status does not imply that their recorded observations are numerically wrong: the standard and headline statistics recompute from their paired records. Replacement runs will receive new immutable IDs.
+The current publication bundles were generated from clean source commit `b2a9bfb8f684ca7c17c49096ac872f7902c613f3`, after the timing-boundary wording and independent summary-recomputation gate were corrected. All use g++ 13.3.0, Macaulay2 1.22, and `BoijSoederberg` 1.5 on the recorded Intel Core Ultra 9 275HX / WSL2 environment.
 
-- [`20260715T191425Z-a65064aa-headline`](runs/20260715T191425Z-a65064aa-headline/) — superseded large-case bundle: four cases, three paired repetitions per case, 12/12 successful pairs, and exact bad/gcd-rinsed equality throughout.
-- [`20260715T191057Z-17b2b12c-standard`](runs/20260715T191057Z-17b2b12c-standard/) — superseded default-size bundle: four cases, five paired repetitions per case, 20/20 successful pairs, and exact equality throughout.
-- [`20260715T185644Z-db8ace97-smoke`](runs/20260715T185644Z-db8ace97-smoke/) — superseded post-fix small-case bundle: two cases, three paired repetitions per case, 6/6 successful pairs.
+- [`20260715T202630Z-b2a9bfb8-headline`](runs/20260715T202630Z-b2a9bfb8-headline/) — current large-case presentation bundle: four cases, three paired repetitions per case, 12/12 successful pairs, and exact bad/gcd-rinsed equality throughout.
+- [`20260715T202451Z-b2a9bfb8-standard`](runs/20260715T202451Z-b2a9bfb8-standard/) — current default reporting bundle: four cases, five paired repetitions per case, 20/20 successful pairs, and exact equality throughout.
+- [`20260715T202431Z-b2a9bfb8-smoke`](runs/20260715T202431Z-b2a9bfb8-smoke/) — current small-case plumbing and correctness bundle: two cases, three paired repetitions per case, 6/6 successful pairs.
+
+The following earlier bundles remain byte-for-byte for provenance but are superseded for publication. Superseded does not mean their recorded observations are known to be numerically wrong; they predate the corrected evidence contract or its final validation gate.
+
+- [`20260715T191425Z-a65064aa-headline`](runs/20260715T191425Z-a65064aa-headline/) — superseded large-case bundle, 12/12 successful pairs.
+- [`20260715T191057Z-17b2b12c-standard`](runs/20260715T191057Z-17b2b12c-standard/) — superseded default-size bundle, 20/20 successful pairs.
+- [`20260715T185644Z-db8ace97-smoke`](runs/20260715T185644Z-db8ace97-smoke/) — superseded post-fix small-case bundle, 6/6 successful pairs.
 - [`20260715T180543Z-2e0daec3-smoke`](runs/20260715T180543Z-2e0daec3-smoke/) — superseded pre-fix harness calibration retained only for provenance. Its correctness and OOM-classification wording were replaced by later gates; do not use it as repository-wide evidence.
-
-Do not quote a retained bundle as current publication evidence. Use the next clean standard or headline bundle that passes the corrected validator.
 
 
 ## Run and validate
