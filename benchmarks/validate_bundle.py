@@ -13,7 +13,13 @@ import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
-from run_benchmarks import normalize_cpp, normalize_m2, parse_time_file
+from run_benchmarks import (
+    SUMMARY_CSV_FIELDS,
+    create_summary,
+    normalize_cpp,
+    normalize_m2,
+    parse_time_file,
+)
 
 
 
@@ -232,6 +238,32 @@ def validate_privacy(bundle: Path) -> None:
                 f"unsafe environment variable captured in {path.relative_to(bundle)}")
 
 
+def validate_summary_artifacts(bundle: Path, profile: dict[str, Any],
+                               records: list[dict[str, Any]]) -> None:
+    summary = load_json(bundle / "summary.json")
+    expected = create_summary(profile, records)
+    require(set(summary) == set(expected), "summary JSON schema differs from records")
+    require(summary.get("schema_version") == expected["schema_version"],
+            "summary JSON schema differs from records")
+    require(isinstance(summary.get("statistic_policy"), str) and summary["statistic_policy"],
+            "summary statistic policy is missing")
+    require(summary.get("sample_accounting") == expected["sample_accounting"],
+            "summary sample accounting differs from records")
+    require(summary.get("cases") == expected["cases"],
+            "summary case statistics differ from records")
+
+    expected_rows = []
+    for item in expected["cases"]:
+        values = {key: item.get(key) for key in SUMMARY_CSV_FIELDS}
+        values.update({key: item["input"][key] for key in ("codimension", "max_degree", "lowbound")})
+        expected_rows.append({key: "" if values[key] is None else str(values[key])
+                              for key in SUMMARY_CSV_FIELDS})
+    with (bundle / "summary.csv").open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        require(reader.fieldnames == SUMMARY_CSV_FIELDS, "summary CSV schema differs from records")
+        require(list(reader) == expected_rows, "summary CSV statistics differ from records")
+
+
 def validate(bundle: Path, allow_dirty: bool) -> None:
     require(bundle.is_dir(), "bundle path is not a directory")
     present = {path.name for path in bundle.iterdir() if path.is_file()}
@@ -241,7 +273,6 @@ def validate(bundle: Path, allow_dirty: bool) -> None:
 
     manifest = load_json(bundle / "manifest.json")
     environment = load_json(bundle / "environment.json")
-    summary = load_json(bundle / "summary.json")
     validation = load_json(bundle / "validation.json")
     require(manifest.get("schema_version") == SCHEMA_VERSION, "manifest schema differs")
     require(manifest.get("bundle_kind") == "boij_task_matched_benchmark_bundle", "bundle kind differs")
@@ -336,22 +367,7 @@ def validate(bundle: Path, allow_dirty: bool) -> None:
         bundle_file(bundle, probe.get("stdout"), f"{name} probe stdout")
         bundle_file(bundle, probe.get("stderr"), f"{name} probe stderr")
 
-    require(summary.get("schema_version") == SCHEMA_VERSION, "summary schema differs")
-    require(summary.get("sample_accounting") == {
-        "planned_pair_count": len(records), "observed_pair_count": len(records),
-        "successful_pair_count": len(records),
-    }, "summary sample accounting differs")
-    summary_cases = summary.get("cases")
-    require(isinstance(summary_cases, list) and len(summary_cases) == len(profile["cases"]),
-            "summary case coverage differs")
-    for item in summary_cases:
-        require(item.get("planned_repetitions") == repetitions
-                and item.get("successful_repetitions") == repetitions
-                and item.get("status_counts") == {"ok": repetitions}, "summary repetitions differ")
-        validate_numeric_tree({key: value for key, value in item.items() if key.endswith(("seconds", "kb"))},
-                              f"summary.{item.get('case_id')}")
-    with (bundle / "summary.csv").open(newline="", encoding="utf-8") as handle:
-        require(len(list(csv.DictReader(handle))) == len(profile["cases"]), "summary CSV rows differ")
+    validate_summary_artifacts(bundle, profile, records)
 
 
 def main() -> int:

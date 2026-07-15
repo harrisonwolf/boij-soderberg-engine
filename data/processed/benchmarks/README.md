@@ -10,4 +10,4 @@ Each row appears to contain one observation for a deterministic `(codimension, m
 - the `c=3,d=500` built-in M2 row completed in 1,021 seconds; its blank memory cell is not evidence that it ran out of memory; and
 - the `m2port_*` columns must not support correctness or speed claims. The old transcription used an unsound early-pass shortcut and exact-set regression testing found a real misclassification at `c=7,d=12` even where counts looked plausible.
 
-Use `benchmarks/run_benchmarks.py` for new evidence. Its bundles capture the missing provenance, repeat paired runs, retain raw logs, separate timeout/OOM/error states, and require exact equality of both the bad and gcd-rinsed result arrays.
+Use `benchmarks/run_benchmarks.py` for new evidence. Its bundles capture the missing provenance, repeat paired runs, retain raw logs, classify timeout and error process outcomes, record any shared-cgroup `oom_kill` delta only as an unattributed concurrent observation, and require exact equality of both the bad and gcd-rinsed result arrays.

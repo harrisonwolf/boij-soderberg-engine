@@ -28,6 +28,12 @@ SCHEMA_VERSION = 1
 KNOWN_REGRESSION = [0, 1, 2, 3, 4, 5, 11, 12]
 SAFE_PROBE = "0,2,7,8"
 OVERFLOW_PROBE = "0,127,357,426,456,490,799,932"
+SUMMARY_CSV_FIELDS = [
+    "case_id", "codimension", "max_degree", "lowbound", "planned_repetitions",
+    "successful_repetitions", "bad_count", "cpp_external_wall_median_seconds",
+    "m2_external_wall_median_seconds", "wall_speedup_m2_over_cpp",
+    "cpp_max_rss_median_kb", "m2_max_rss_median_kb",
+]
 
 
 def utc_now() -> str:
@@ -196,6 +202,12 @@ def run_measured(
     command: list[str], cwd: Path, timeout_seconds: float,
     stdout_path: Path, stderr_path: Path, time_path: Path,
 ) -> tuple[int | None, bool, int | None, float]:
+    """Measure the complete GNU-time-wrapped child invocation.
+
+    The returned external wall value comes from Python time.perf_counter around
+    process launch through collection. GNU time coarser %e wall value and %M
+    peak RSS are written to time_path.
+    """
     measured = [
         "/usr/bin/time", "-f",
         "elapsed_seconds=%e\nuser_seconds=%U\nsystem_seconds=%S\nmax_rss_kb=%M\nexit_code=%x",
@@ -524,7 +536,12 @@ def create_summary(profile: dict[str, Any], records: list[dict[str, Any]]) -> di
         })
     return {
         "schema_version": SCHEMA_VERSION,
-        "statistic_policy": "median over successful paired repetitions; execution order alternates",
+        "statistic_policy": (
+            "median over successful paired repetitions; execution order alternates; "
+            "external_wall_seconds is Python time.perf_counter around the complete "
+            "GNU-time-wrapped child command; gnu_time_elapsed_seconds is the separate "
+            "coarser GNU %e field; max_rss_kb is GNU %M"
+        ),
         "sample_accounting": {
             "planned_pair_count": len(profile["cases"]) * int(profile["repetitions"]),
             "observed_pair_count": len(records),
@@ -535,17 +552,11 @@ def create_summary(profile: dict[str, Any], records: list[dict[str, Any]]) -> di
 
 
 def write_summary_csv(path: Path, summary: dict[str, Any]) -> None:
-    fields = [
-        "case_id", "codimension", "max_degree", "lowbound", "planned_repetitions",
-        "successful_repetitions", "bad_count", "cpp_external_wall_median_seconds",
-        "m2_external_wall_median_seconds", "wall_speedup_m2_over_cpp",
-        "cpp_max_rss_median_kb", "m2_max_rss_median_kb",
-    ]
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
+        writer = csv.DictWriter(handle, fieldnames=SUMMARY_CSV_FIELDS, lineterminator="\n")
         writer.writeheader()
         for case in summary["cases"]:
-            row = {key: case.get(key) for key in fields}
+            row = {key: case.get(key) for key in SUMMARY_CSV_FIELDS}
             row.update({key: case["input"][key] for key in ("codimension", "max_degree", "lowbound")})
             writer.writerow(row)
 
@@ -696,7 +707,11 @@ def main() -> int:
                 "paired_repetitions": profile["repetitions"],
                 "alternating_engine_order": True,
                 "timeout_seconds_per_engine": profile["timeout_seconds"],
-                "primary_timing": "external wall time from GNU time, paired on one machine",
+                "primary_timing": (
+                    "Python time.perf_counter around the complete GNU-time-wrapped child "
+                    "command, paired on one machine; GNU %e is a separate coarser wall "
+                    "record and GNU %M supplies peak RSS"
+                ),
                 "failure_classification": "timeout and error are process outcomes; a positive shared-cgroup oom_kill delta is only an unattributed concurrent observation, never proof that this process exhausted memory",
             },
             "correctness_preflight": {

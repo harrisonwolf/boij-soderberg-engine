@@ -41,9 +41,9 @@ The following values are **historical, single-run program-time measurements** pr
 | 3 | 20,708,500 | 11.0 s | 1,021 s (~17 min) | 93× |
 | 6 | 15,890,700 | 20.6 s | historical timeout at 25 min | — |
 
-Fresh runs use the evidence studio in [`benchmarks/`](benchmarks/README.md). It records the commit and compiler flags, machine and tool metadata, Macaulay2 and `BoijSoederberg` versions, commands, raw output, GNU `time` measurements, repeated paired runs with alternating order, exact result arrays, and checksums. A bundle is rejected unless C++ and Macaulay2 agree on every bad sequence and every gcd-rinsed sequence; matching counts alone is insufficient.
+Fresh runs use the evidence studio in [`benchmarks/`](benchmarks/README.md). It records the commit and compiler flags, machine and tool metadata, Macaulay2 and `BoijSoederberg` versions, commands, raw output, repeated paired runs with alternating order, exact result arrays, and checksums. `external_wall_seconds` is measured with Python's monotonic `time.perf_counter` around the complete GNU-`time`-wrapped child command. GNU `time` `%e` is retained separately as a coarser wall-clock cross-check, and `%M` supplies peak RSS. A bundle is rejected unless C++ and Macaulay2 agree on every bad sequence and every gcd-rinsed sequence; matching counts alone is insufficient.
 
-The primary publication bundles are the five-repetition [`standard`](benchmarks/runs/20260715T191057Z-17b2b12c-standard/) campaign (20/20 successful pairs) and the larger three-repetition [`headline`](benchmarks/runs/20260715T191425Z-a65064aa-headline/) campaign (12/12 successful pairs). On the headline bundle's recorded Intel Core Ultra 9 275HX / WSL2 environment, the end-to-end external-wall medians were:
+The former five-repetition [`standard`](benchmarks/runs/20260715T191057Z-17b2b12c-standard/) campaign (20/20 successful pairs) and three-repetition [`headline`](benchmarks/runs/20260715T191425Z-a65064aa-headline/) campaign (12/12 successful pairs) are retained byte-for-byte but superseded for publication. Their recorded values recompute from `runs.jsonl`; they are not known to be numerically wrong. New immutable runs are required because the timing-boundary wording and independent summary-recomputation gate were corrected after these bundles were captured. On the superseded headline bundle's recorded Intel Core Ultra 9 275HX / WSL2 environment, the end-to-end external-wall medians were:
 
 | codim | candidates | C++ median | Macaulay2 median | wall speedup |
 | ---: | ---: | ---: | ---: | ---: |
@@ -52,7 +52,7 @@ The primary publication bundles are the five-repetition [`standard`](benchmarks/
 | 6 | 906,192 | 2.661 s | 87.858 s | 33.0× |
 | 7 | 346,104 | 1.466 s | 46.464 s | 31.7× |
 
-These are machine- and case-scoped medians, not a universal speedup. The bundles retain every raw timing and RSS record, alternating order, exact outputs, environment metadata, and checksum. The task is deterministic, so no random seed applies.
+These are machine- and case-scoped medians, not a universal speedup. The bundles retain every timing and RSS record, alternating order, exact outputs, environment metadata, and checksum. The task is deterministic, so no random seed applies. Treat these figures as a superseded audit trail until replacement bundles are published.
 
 The earlier [`20260715T180543Z-2e0daec3-smoke`](benchmarks/runs/20260715T180543Z-2e0daec3-smoke/) bundle is retained as pre-fix harness calibration only. The post-fix [`20260715T185644Z-db8ace97-smoke`](benchmarks/runs/20260715T185644Z-db8ace97-smoke/) bundle verifies the corrected exact path on six small pairs.
 

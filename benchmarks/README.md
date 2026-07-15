@@ -20,7 +20,7 @@ Every run starts with a `c=7,d=12,lowbound=1` correctness sentinel. It must prod
 
 - C++ and Macaulay2 execute as a pair on one recorded machine.
 - Order alternates by repetition to reduce order bias.
-- External wall time and peak RSS come from GNU `time`; internal phase times are diagnostic.
+- `external_wall_seconds` comes from Python's monotonic `time.perf_counter` around the complete GNU-`time`-wrapped child command. GNU `%e` is a separate, coarser wall-clock cross-check; peak RSS comes from GNU `%M`. Internal phase times are diagnostic.
 - The summary uses medians over successful paired repetitions and preserves the planned, observed, and successful sample counts.
 - Process outcomes are recorded as `timeout` or `error`. A positive shared-cgroup `oom_kill` counter delta is retained only as an unattributed concurrent observation; it is never proof that the measured process exhausted memory. A blank value, timeout, or signal also never proves OOM.
 - The task is deterministic, so no random seed is applicable; inputs and exact result arrays are recorded instead.
@@ -29,14 +29,16 @@ The smoke profile has three repetitions and checks plumbing/correctness. Standar
 
 The strict validator accepts only complete, all-success paired bundles. The runner validates under a hidden staging directory whose bundle basename already matches the run ID, then atomically moves an approved bundle into `benchmarks/runs/<run-id>`. A completed run with a failed pair or failed validator moves to `benchmarks/runs/quarantine/<run-id>` instead; incomplete staging data is deleted. Quarantined diagnostics are deliberately not publication evidence and are expected to fail the strict validator.
 
-## Published evidence
+## Retained evidence status
 
-- [`20260715T191425Z-a65064aa-headline`](runs/20260715T191425Z-a65064aa-headline/) — current large-case publication bundle: four cases, three paired repetitions per case, 12/12 successful pairs, and exact bad/gcd-rinsed equality throughout.
-- [`20260715T191057Z-17b2b12c-standard`](runs/20260715T191057Z-17b2b12c-standard/) — current default reporting bundle: four cases, five paired repetitions per case, 20/20 successful pairs, and exact equality throughout.
-- [`20260715T185644Z-db8ace97-smoke`](runs/20260715T185644Z-db8ace97-smoke/) — post-fix small-case bundle: two cases, three paired repetitions per case, 6/6 successful pairs.
-- [`20260715T180543Z-2e0daec3-smoke`](runs/20260715T180543Z-2e0daec3-smoke/) — pre-fix harness calibration retained for provenance; do not use it as repository-wide correctness evidence.
+The existing bundles remain byte-for-byte unchanged, but all predate the corrected timing-boundary wording and independent summary-recomputation gate. They are therefore superseded for publication. This status does not imply that their recorded observations are numerically wrong: the standard and headline statistics recompute from their paired records. Replacement runs will receive new immutable IDs.
 
-Use the standard or headline bundle for reporting. Smoke evidence establishes the harness and small-case measurements only.
+- [`20260715T191425Z-a65064aa-headline`](runs/20260715T191425Z-a65064aa-headline/) — superseded large-case bundle: four cases, three paired repetitions per case, 12/12 successful pairs, and exact bad/gcd-rinsed equality throughout.
+- [`20260715T191057Z-17b2b12c-standard`](runs/20260715T191057Z-17b2b12c-standard/) — superseded default-size bundle: four cases, five paired repetitions per case, 20/20 successful pairs, and exact equality throughout.
+- [`20260715T185644Z-db8ace97-smoke`](runs/20260715T185644Z-db8ace97-smoke/) — superseded post-fix small-case bundle: two cases, three paired repetitions per case, 6/6 successful pairs.
+- [`20260715T180543Z-2e0daec3-smoke`](runs/20260715T180543Z-2e0daec3-smoke/) — superseded pre-fix harness calibration retained only for provenance. Its correctness and OOM-classification wording were replaced by later gates; do not use it as repository-wide evidence.
+
+Do not quote a retained bundle as current publication evidence. Use the next clean standard or headline bundle that passes the corrected validator.
 
 
 ## Run and validate
@@ -57,15 +59,15 @@ Each immutable bundle contains:
 
 - a manifest with the full commit, build contract, exact commands, profile, Macaulay2 version, `BoijSoederberg` version, and oracle-template hash;
 - sanitized machine/tool metadata (no username, hostname, `PATH`, or absolute workstation path);
-- raw stdout, stderr, and GNU `time` output for every engine invocation;
+- raw stdout, stderr, and GNU `time` output for every engine invocation, plus the runner's high-resolution external-wall record;
 - the rendered M2 scripts and normalized exact result arrays;
 - per-pair records, JSON/CSV summaries, arithmetic/correctness preflight evidence; and
 - a complete SHA-256 inventory.
 
-`validate_bundle.py` rereads the arrays rather than trusting stored counts or hashes. It rejects missing repetitions, order drift, changed task/build metadata, malformed degree sequences, non-finite measurements, result-set differences, checksum changes, unsafe paths, private workstation identifiers, and dirty publication bundles. Negative tests prove that an equal count with one substituted bad or gcd-rinsed sequence is rejected.
+`validate_bundle.py` rereads the arrays rather than trusting stored counts or hashes and independently reconstructs every JSON/CSV summary count, median, and ratio from `runs.jsonl`. It rejects missing repetitions, order drift, changed task/build metadata, malformed degree sequences, non-finite measurements, result-set differences, summary drift, checksum changes, unsafe paths, private workstation identifiers, and dirty publication bundles. Negative tests prove that an equal count with one substituted bad or gcd-rinsed sequence and a tampered summary statistic are rejected.
 
 ## Interpreting results
 
-Do not mix measurement boundaries. Historical values in `data/processed/benchmarks/benchmark_results.csv` are program-time observations; the studio's primary comparison is end-to-end external wall time, which includes interpreter/package startup. Quote the metric, profile, median, repetition count, machine, bundle path, and commit together.
+Do not mix measurement boundaries. Historical values in `data/processed/benchmarks/benchmark_results.csv` are program-time observations; the studio's primary comparison is the runner's end-to-end monotonic external wall time, which includes GNU `time`, interpreter/package startup, and process collection. GNU `%e` remains a separate coarser cross-check. Quote the metric, profile, median, repetition count, machine, bundle path, and commit together.
 
 Both implementations materialize the candidate list. The studio establishes performance only for its recorded cases and machine. It does not prove streaming behavior, an arbitrary-point input path, universal memory safety, or completion of a historical multi-billion-candidate campaign.

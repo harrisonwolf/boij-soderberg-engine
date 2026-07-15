@@ -15,13 +15,21 @@ from run_benchmarks import (
     KNOWN_REGRESSION,
     OVERFLOW_PROBE,
     SAFE_PROBE,
+    create_summary,
     normalize_cpp,
     finalize_staged_bundle,
     normalize_m2,
     render_m2_script,
     sequence_hash,
+    write_summary_csv,
 )
-from validate_bundle import PRIVATE_TEXT, ValidationError, expected_candidate_count, validate_record
+from validate_bundle import (
+    PRIVATE_TEXT,
+    ValidationError,
+    expected_candidate_count,
+    validate_record,
+    validate_summary_artifacts,
+)
 
 
 REPO = Path(__file__).resolve().parent.parent
@@ -307,6 +315,81 @@ class ValidatorNegativeTests(unittest.TestCase):
         for value in ("/home/alice/project", "/mnt/c/Users/alice/project", "C:\\Users\\alice\\repo", "WIN-ABCDEF123"):
             with self.subTest(value=value):
                 self.assertIsNotNone(PRIVATE_TEXT.search(value))
+
+
+class SummaryValidationTests(unittest.TestCase):
+    CASE = {"id": "c3-d8-l1", "codimension": 3, "max_degree": 8, "lowbound": 1}
+    PROFILE = {"cases": [CASE], "repetitions": 3, "timeout_seconds": 30}
+
+    def records(self) -> list[dict]:
+        records = []
+        for repetition, cpp_wall, m2_wall, cpp_rss, m2_rss in (
+            (1, 1.0, 4.0, 100, 400),
+            (2, 2.0, 6.0, 200, 600),
+            (3, 3.0, 8.0, 300, 800),
+        ):
+            def engine(wall: float, rss: int) -> dict:
+                return {
+                    "measurements": {"external_wall_seconds": wall, "max_rss_kb": rss},
+                    "counts": {"bad": 7},
+                }
+            records.append({
+                "case_id": self.CASE["id"], "repetition": repetition, "status": "ok",
+                "engines": {"cpp": engine(cpp_wall, cpp_rss), "m2": engine(m2_wall, m2_rss)},
+            })
+        return records
+
+    def write_summary(self, bundle: Path, records: list[dict]) -> dict:
+        summary = create_summary(self.PROFILE, records)
+        (bundle / "summary.json").write_text(json.dumps(summary), encoding="utf-8")
+        write_summary_csv(bundle / "summary.csv", summary)
+        return summary
+
+    def test_recomputed_summary_accepts_exact_json_and_csv(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            bundle = Path(directory)
+            records = self.records()
+            summary = self.write_summary(bundle, records)
+            case = summary["cases"][0]
+            self.assertEqual(case["successful_repetitions"], 3)
+            self.assertEqual(case["bad_count"], 7)
+            self.assertEqual(case["cpp_external_wall_median_seconds"], 2.0)
+            self.assertEqual(case["m2_external_wall_median_seconds"], 6.0)
+            self.assertEqual(case["wall_speedup_m2_over_cpp"], 3.0)
+            self.assertEqual(case["cpp_max_rss_median_kb"], 200.0)
+            self.assertEqual(case["m2_max_rss_median_kb"], 600.0)
+            self.assertIn("time.perf_counter", summary["statistic_policy"])
+            self.assertIn("GNU %e", summary["statistic_policy"])
+            self.assertIn("GNU %M", summary["statistic_policy"])
+            validate_summary_artifacts(bundle, self.PROFILE, records)
+
+    def test_recomputed_summary_rejects_tampered_published_statistics(self) -> None:
+        fields = (
+            "successful_repetitions", "bad_count", "cpp_external_wall_median_seconds",
+            "wall_speedup_m2_over_cpp", "cpp_max_rss_median_kb",
+        )
+        for field in fields:
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+                bundle = Path(directory)
+                records = self.records()
+                summary = self.write_summary(bundle, records)
+                summary["cases"][0][field] = 999
+                (bundle / "summary.json").write_text(json.dumps(summary), encoding="utf-8")
+                with self.assertRaisesRegex(ValidationError, "summary case statistics differ"):
+                    validate_summary_artifacts(bundle, self.PROFILE, records)
+
+    def test_recomputed_summary_rejects_tampered_csv(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            bundle = Path(directory)
+            records = self.records()
+            self.write_summary(bundle, records)
+            lines = (bundle / "summary.csv").read_text(encoding="utf-8").splitlines()
+            header, row = lines[0].split(","), lines[1].split(",")
+            row[header.index("wall_speedup_m2_over_cpp")] = "999"
+            (bundle / "summary.csv").write_text(
+                ",".join(header) + "\n" + ",".join(row) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValidationError, "summary CSV statistics differ"):
+                validate_summary_artifacts(bundle, self.PROFILE, records)
 
 
 if __name__ == "__main__":
