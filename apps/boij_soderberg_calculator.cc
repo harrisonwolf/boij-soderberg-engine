@@ -53,6 +53,11 @@ bool parse_degree_sequence(const std::string &line, std::vector<int> &degrees, s
 		error = "A degree sequence must contain at least two entries and start with 0.";
 		return false;
 	}
+	if (degrees.size() - 1 > static_cast<size_t>(BOIJ_MAX_SUPPORTED_CODIMENSION)) {
+		error = "Conjecture checks support codimension at most "
+			+ std::to_string(BOIJ_MAX_SUPPORTED_CODIMENSION) + ".";
+		return false;
+	}
 
 	if (degrees.front() != 0) {
 		error = "A degree sequence must start with 0.";

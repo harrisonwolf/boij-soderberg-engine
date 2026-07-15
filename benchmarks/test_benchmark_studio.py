@@ -53,6 +53,43 @@ class EngineRegressionTests(unittest.TestCase):
         self.assertEqual(overflow_payload["status"], "arithmetic_overflow")
         self.assertIn("pure_betti value", overflow_payload["error"])
 
+    def test_scaled_degree_sequences_preserve_exact_betti(self) -> None:
+        expected = [1, 7, 21, 35, 35, 21, 7, 1]
+        base = self.run_driver("--probe-sequence=0,1,2,3,4,5,6,7")
+        formerly_false_overflow = self.run_driver(
+            "--probe-sequence=0,1000,2000,3000,4000,5000,6000,7000"
+        )
+        larger_scale = self.run_driver(
+            "--probe-sequence=0,1000000,2000000,3000000,4000000,5000000,6000000,7000000"
+        )
+        for completed in (base, formerly_false_overflow, larger_scale):
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            payload = json.loads(completed.stdout)
+            self.assertEqual(payload["status"], "ok")
+            self.assertEqual(payload["pure_betti"], expected)
+        self.assertEqual(
+            json.loads(base.stdout)["pure_betti"],
+            json.loads(formerly_false_overflow.stdout)["pure_betti"],
+        )
+
+    def test_benchmark_cli_rejects_unsupported_codimension(self) -> None:
+        completed = self.run_driver(
+            "--codim=21", "--max-degree=21", "--lowbound=1"
+        )
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        payload = json.loads(completed.stdout)
+        self.assertEqual(payload["status"], "error")
+        self.assertIn("--codim must be in [2,20]", payload["error"])
+
+    def test_candidate_count_overflow_is_explicit(self) -> None:
+        completed = self.run_driver(
+            "--codim=20", "--max-degree=1000", "--lowbound=1"
+        )
+        self.assertEqual(completed.returncode, 4, completed.stderr)
+        payload = json.loads(completed.stdout)
+        self.assertEqual(payload["status"], "arithmetic_overflow")
+        self.assertIn("degree-sequence count", payload["error"])
+
     def test_builtin_m2_and_cpp_exact_sets_match_on_legacy_miss(self) -> None:
         if not self.m2:
             self.skipTest("Macaulay2 is not installed")

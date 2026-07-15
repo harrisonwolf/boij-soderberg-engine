@@ -131,7 +131,14 @@ int main(int argc, char** args){
 	int l = -1;
 	if(argc == 5) l = stoi(args[4]);
 	else l = 1;
-	if(c > 20){ cerr << "You tried running program w/ codimension greater than 20. If you are sure, comment the check out from the code\n"; exit(1); }
+	if(c < 2 || c > BOIJ_MAX_SUPPORTED_CODIMENSION){
+		cerr << "Codimension must be in [2," << BOIJ_MAX_SUPPORTED_CODIMENSION << "]\n";
+		exit(1);
+	}
+	if(d < c){
+		cerr << "Max degree must be at least the codimension\n";
+		exit(1);
+	}
 	if(d < l){ cerr << "Tried generated seqs of max degree d < least degree l\n"; exit(1); }
 
 	fstream outs;

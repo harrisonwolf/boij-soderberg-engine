@@ -14,7 +14,7 @@ For each `(codimension, max_degree, lowbound)` case, both engines:
 
 The C++ path calls `gen_deg_seqs`, `pure_betti`, `test_BEH`, `test_LLBC`, and `gcd_rinse`. The oracle path loads Macaulay2's `BoijSoederberg` package and calls `pureBetti`, followed by explicit BEH/LLBC and gcd-rinse checks. The historical shortcut transcription is not used.
 
-Every run starts with a `c=7,d=12,lowbound=1` correctness sentinel. It must produce 792 candidates, 28 bad sequences, and 26 gcd-rinsed sequences, including `{0,1,2,3,4,5,11,12}`. This is the case the historical shortcut misclassified even though a count could appear plausible. The studio also runs a known-safe arithmetic probe and a deliberate signed-64-bit overflow probe; overflow must be reported explicitly.
+Every run starts with a `c=7,d=12,lowbound=1` correctness sentinel. It must produce 792 candidates, 28 bad sequences, and 26 gcd-rinsed sequences, including `{0,1,2,3,4,5,11,12}`. This is the case the historical shortcut misclassified even though a count could appear plausible. The studio also runs a known-safe arithmetic probe and a deliberate signed-64-bit overflow probe; the latter has exact `B_4 = 14,043,766,264,500,157,900`, so its failure is a genuine final-output overflow. The benchmark test gate separately verifies scale invariance through the formerly false-overflow sequence `{0,1000,2000,3000,4000,5000,6000,7000}`.
 
 ## Measurement policy
 
@@ -28,6 +28,7 @@ Every run starts with a `c=7,d=12,lowbound=1` correctness sentinel. It must prod
 The smoke profile has three repetitions and checks plumbing/correctness. Standard has five repetitions and is the default reporting profile. Headline has three larger repetitions with per-engine timeouts; run it only when its cost is intentional.
 
 The strict validator accepts only complete, all-success paired bundles. The runner validates under a hidden staging directory whose bundle basename already matches the run ID, then atomically moves an approved bundle into `benchmarks/runs/<run-id>`. A completed run with a failed pair or failed validator moves to `benchmarks/runs/quarantine/<run-id>` instead; incomplete staging data is deleted. Quarantined diagnostics are deliberately not publication evidence and are expected to fail the strict validator.
+
 ## Published evidence
 
 - [`20260715T180543Z-2e0daec3-smoke`](runs/20260715T180543Z-2e0daec3-smoke/) — pre-fix clean commit `2e0daec3`, two cases, three paired repetitions per case, six of six successful pairs, and exact bad/gcd-rinsed result equality throughout. It validates the benchmark driver’s exact task path, but predates consolidation of the public search helpers and is not evidence of repository-wide algorithm-suite health.

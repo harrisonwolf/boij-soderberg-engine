@@ -14,6 +14,7 @@
 #include <limits>
 #include <stdexcept>
 #include "binom.h"
+#include "seq_funcs.h"
 using namespace std;
 
 namespace {
@@ -43,6 +44,49 @@ long long checked_lcm_nonnegative(long long lhs, long long rhs, const char* cont
 	if(lhs == 0 || rhs == 0) return 0;
 	const long long divisor = gcd(lhs, rhs);
 	return checked_multiply_nonnegative(lhs / divisor, rhs, context);
+}
+pair<long long,long long> reduced_product_fraction(
+	vector<long long> numerator_factors, vector<long long> denominator_factors) {
+	// Cross-cancel before multiplying. Division can only remove prime factors,
+	// so one pass over every pair leaves the two products globally coprime.
+	for(long long& numerator_factor: numerator_factors){
+		if(numerator_factor <= 0){
+			throw invalid_argument("pure_betti received a nonpositive numerator factor");
+		}
+		for(long long& denominator_factor: denominator_factors){
+			if(denominator_factor <= 0){
+				throw invalid_argument("pure_betti received a nonpositive denominator factor");
+			}
+			const long long divisor = gcd(numerator_factor, denominator_factor);
+			numerator_factor /= divisor;
+			denominator_factor /= divisor;
+		}
+	}
+
+	long long numerator = 1;
+	for(long long factor: numerator_factors){
+		numerator = checked_multiply_nonnegative(
+			numerator, factor, "pure_betti reduced numerator/final value");
+	}
+	long long denominator = 1;
+	for(long long factor: denominator_factors){
+		denominator = checked_multiply_nonnegative(
+			denominator, factor, "pure_betti reduced denominator/LCM");
+	}
+	return {numerator, denominator};
+}
+
+int supported_betti_codimension(const vector<long long>& B, const char* context) {
+	if(B.size() < 2){
+		throw invalid_argument(string(context) + " requires at least two Betti values");
+	}
+	const size_t codimension = B.size() - 1;
+	if(codimension > static_cast<size_t>(BOIJ_MAX_SUPPORTED_CODIMENSION)){
+		throw invalid_argument(
+			string(context) + " supports codimension at most "
+			+ to_string(BOIJ_MAX_SUPPORTED_CODIMENSION));
+	}
+	return static_cast<int>(codimension);
 }
 
 }
@@ -171,7 +215,7 @@ vector<vector<int>> gen_subsets_fast(int start, int o, int n, int lowbound){
 	return retlist;
 }
 
-vector<vector<int>> gen_deg_seqs(int c, int d, int lowbound = 1){
+vector<vector<int>> gen_deg_seqs(int c, int d, int lowbound){
 	vector<vector<int>> retseqs;
 	if(lowbound < 1) lowbound = 1;
 	//first get the order-c subsets of d
@@ -191,13 +235,16 @@ vector<vector<int>> gen_deg_seqs(int c, int d, int lowbound = 1){
 vector<long long> pure_betti(vector<int> D){
 //	cerr << "Entered pure_betti function\n";
 //	cerr << "D.size(): " << D.size() << endl;
-	//sanity check
-	if(D.size() == 1){ cerr << "Called pure_betti on degseq of size 1 (\"length\" 0)\n"; exit(1); }
-	//make sure it is increasing starting at 0; make sure it is a "valid" degree sequence
-	if(D.at(0) != 0){ cerr << "Called pure_betti on degree sequence not beginning with 0\n"; exit(1); }
-	//now make sure is increasing
-	for(int i=0; i<D.size()-1; i++){
-		if(!(D.at(i) < D.at(i+1))) { cerr << "Called pure_betti on degree sequence that is not strictly increasing\n"; exit(1); }
+	if(D.size() < 2){
+		throw invalid_argument("pure_betti requires at least two degrees");
+	}
+	if(D.front() != 0){
+		throw invalid_argument("pure_betti requires a degree sequence beginning with zero");
+	}
+	for(size_t i=0; i+1<D.size(); i++){
+		if(D.at(i) >= D.at(i+1)){
+			throw invalid_argument("pure_betti requires a strictly increasing degree sequence");
+		}
 	}
 //	cerr << "Starting pure_betti...\n";
 	int c = D.size(); //our codimension
@@ -211,30 +258,18 @@ vector<long long> pure_betti(vector<int> D){
 	//now do the rest of the pi's
 	for(int i=1; i<c; i++){
 //		cerr << "Making pi_" << i << "...\n";
-		long long num = 1;
-		long long den = 1;
+		vector<long long> numerator_factors;
+		vector<long long> denominator_factors;
 		for(int x: D){
 			if(x > 0 and x != D.at(i)){
-				num = checked_multiply_nonnegative(num, x, "pure_betti numerator");
+				numerator_factors.push_back(x);
 				const long long difference = llabs(
 					static_cast<long long>(x) - static_cast<long long>(D.at(i)));
-				den = checked_multiply_nonnegative(den, difference, "pure_betti denominator");
+				denominator_factors.push_back(difference);
 			}
 		}
-		pi_vec.at(i) = pair<long long,long long>(num,den);
-//		cerr << "pi_" << i << " = " << num << " / " << den << endl;
-	}
-	//now find L and multiply each numerator by it
-	//how do I find L..?
-	//get everything in lowest terms first
-//	cerr << "Putting each pi_i in lowest terms...\n";
-	for(auto &p: pi_vec){
-		long long div = gcd(p.first,p.second);
-		if(div > 1){
-			p.first = p.first/div;
-			p.second = p.second/div;
-		}
-//		cerr << "new pi_i = " << p.first << " / " << p.second << endl;
+		pi_vec.at(i) = reduced_product_fraction(
+			numerator_factors, denominator_factors);
 	}
 	//now find L and multiply each numerator by it
 //	cerr << "Finding L...\n";
@@ -266,23 +301,19 @@ vector<long long> pure_betti(vector<int> D){
 //return FALSE if violator
 bool test_BEH(vector<long long> B){ //see if a potential betti sequence is a violator //Note: pure betti is passed, NOT a degree sequence
 	//cerr << "Testing BEH on " << seq_to_string(B) << "...\n";
-	bool good = true;
-//	bool flag = false; //whether we've printed the fail msg for this one yet
-	int c = B.size()-1;
-	for(int i=0; i<B.size(); i++){
-		if(B.at(i) < binom(c,i)){
-			good = false;
-//			if(!flag) cerr << "pure betti seq " << seq_to_string(B) << " failed BEH b/c " << i << "th p.b. number " << B.at(i) << " < binom(" << c << "," << i << ") = " << binom(c,i) << endl;
-//			flag = true;
+	const int c = supported_betti_codimension(B, "test_BEH");
+	for(size_t i=0; i<B.size(); i++){
+		if(B.at(i) < binom(c, static_cast<int>(i))){
+			return false;
 		}
 	}
 
-	return good;
+	return true;
 }
 
 //returns FALSE if violator
 bool test_LLBC(vector<long long> B){
-	int c = B.size()-1;
+	const int c = supported_betti_codimension(B, "test_LLBC");
 	long long sum = 0;
 	for(long long b: B) sum = checked_add_nonnegative(sum, b, "test_LLBC sum");
 	long long target = 3; // 3 * 2^(c-1), with c >= 1 for a degree sequence
@@ -354,7 +385,7 @@ vector<vector<int>> read_degree_seqs(string filename){
 bool compare_seqs(vector<int> A, vector<int> B){
 	if(A.size() != B.size()) return false;
 	size_t size = A.size();
-	for(int i=0; i<size; i++){
+	for(size_t i=0; i<size; i++){
 		if(A.at(i) != B.at(i)) return false;
 	}
 	return true;

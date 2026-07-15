@@ -19,6 +19,14 @@ The ~1,200-line mathematical core — `src/seq_funcs.cc`, `src/test_funcs.cc`, `
 
 Historical outputs and research artifacts are kept in-repo for reproducibility. Longer operational notes, detailed CLI usage, and batch workflow material live in [docs/cli_reference.md](docs/cli_reference.md) and [docs/batch_workflows.md](docs/batch_workflows.md).
 
+## Arithmetic and supported domain
+
+Degree entries are signed 32-bit integers; a valid sequence starts at zero, has at least two entries, and is strictly increasing. `pure_betti` cross-cancels numerator and denominator factors before either product is formed, so scaling every degree by a common positive integer does not create a false intermediate overflow. Reduced fractions are combined with a checked denominator LCM, and each final value is computed as `numerator * (L / denominator)`.
+
+Pure Betti values, `L`, and candidate counts use signed 64-bit integers. The engine throws an explicit arithmetic-overflow error if a reduced numerator, reduced denominator/LCM, candidate count, or final Betti value cannot be represented; it is not an arbitrary-precision implementation. The benchmark/search CLI supports codimensions 2–20, while direct BEH/LLBC checks and the calculator support codimensions 1–20. The codimension cap keeps the current integer binomial implementation inside its verified range; larger conjecture checks are rejected explicitly rather than allowed to overflow.
+
+Enumeration still materializes the complete candidate family, so memory and runtime impose much tighter practical limits than these numeric type bounds.
+
 ## Performance evidence
 
 The following values are **historical, single-run program-time measurements** preserved in `data/processed/benchmarks/benchmark_results.csv`. They are useful orientation, not publication-grade benchmark evidence: the historical table does not contain the command, machine, tool versions, raw logs, repetitions, or a seed (the task is deterministic). A blank memory cell means “not recorded,” not “out of memory.”

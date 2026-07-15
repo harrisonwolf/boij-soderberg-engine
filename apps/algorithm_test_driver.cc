@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -440,6 +441,43 @@ TestSuiteResult run_self_dual_suite() {
 	return suite;
 }
 
+TestSuiteResult run_scale_invariance_suite() {
+	const vector<int> base = {0,1,2,3,4,5,6,7};
+	const vector<int> formerly_false_overflow = {0,1000,2000,3000,4000,5000,6000,7000};
+	const vector<int> larger_scale = {
+		0,1000000,2000000,3000000,4000000,5000000,6000000,7000000
+	};
+	const vector<long long> expected = {1,7,21,35,35,21,7,1};
+	const vector<long long> base_betti = pure_betti(base);
+
+	TestSuiteResult suite{"Pure-Betti scale invariance", {}};
+	suite.cases.push_back(expect_equal("SI01-base", base_betti, expected));
+	suite.cases.push_back(expect_equal(
+		"SI02-former-false-overflow", pure_betti(formerly_false_overflow), expected));
+	suite.cases.push_back(expect_equal(
+		"SI03-larger-scale", pure_betti(larger_scale), expected));
+	suite.cases.push_back(expect_equal(
+		"SI04-betti-equality", pure_betti(formerly_false_overflow), base_betti));
+	suite.cases.push_back(expect_equal(
+		"SI05-pi-equality", compute_pi_values(formerly_false_overflow), compute_pi_values(base)));
+	bool beh_boundary_rejected = false;
+	bool llbc_boundary_rejected = false;
+	const vector<long long> unsupported_codimension(22, 1);
+	try{
+		test_BEH(unsupported_codimension);
+	}catch(const invalid_argument&){
+		beh_boundary_rejected = true;
+	}
+	try{
+		test_LLBC(unsupported_codimension);
+	}catch(const invalid_argument&){
+		llbc_boundary_rejected = true;
+	}
+	suite.cases.push_back(expect_equal("SI06-BEH-boundary", beh_boundary_rejected, true));
+	suite.cases.push_back(expect_equal("SI07-LLBC-boundary", llbc_boundary_rejected, true));
+	return suite;
+}
+
 TestSuiteResult run_large_betti_suite() {
 	const vector<LargeBettiResult> expected = {
 		{{0,1,12,98},{45881,50568,4753,66}}, {{0,1,13,95},{46248,50635,4465,78}}, {{0,1,13,98},{49470,54145,4753,78}},
@@ -467,6 +505,7 @@ int main() {
 	vector<TestSuiteResult> suites = {
 		run_binom_suite(),
 		run_count_suite(),
+		run_scale_invariance_suite(),
 		run_degree_suite(),
 		run_is_degen_suite(),
 		run_calc_sum_suite(),

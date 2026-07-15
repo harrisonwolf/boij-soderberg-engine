@@ -155,8 +155,10 @@ int emit_probe(const string& raw) {
 }
 
 int emit_benchmark(const Options& options) {
-	if(options.codimension < 2 || options.codimension > 20){
-		throw invalid_argument("--codim must be in [2,20]");
+	if(options.codimension < 2 || options.codimension > BOIJ_MAX_SUPPORTED_CODIMENSION){
+		throw invalid_argument(
+			"--codim must be in [2," + to_string(BOIJ_MAX_SUPPORTED_CODIMENSION)
+			+ "]");
 	}
 	if(options.max_degree < options.codimension){
 		throw invalid_argument("--max-degree must be at least the codimension");
