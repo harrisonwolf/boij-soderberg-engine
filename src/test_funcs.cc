@@ -118,6 +118,10 @@ string which_violations(vector<int> D){
 	return retstream.str();
 }
 
+// Legacy factor-display helper for the development-only test_program. The
+// supported calculator uses compute_pi_values(), and all exact search paths use
+// pure_betti(). This routine preserves factor pairs after cross-cancellation;
+// it does not compute L or decide either conjecture.
 vector<vector<pair<int,int>>> pi(vector<int> D){
 	int c = D.size()-1; //codimension we're working in
 	//first calculate pi_i's
@@ -142,9 +146,7 @@ vector<vector<pair<int,int>>> pi(vector<int> D){
 //		for(pair<int,int> p: v) cerr << "{" << p.first << "," << p.second << "} ";
 //		cerr << endl;
 //	}
-	//this all works, now the hard part
-	//now do this for each vector of pairs:
-	//for each numerator, see if it reduces with each denom (and if it does, just reduce it and continue)	
+	//Cross-cancel numerator factors against denominator factors for display.
 	for(int i=1; i<=c; i++){ //for each vector of pairs pi_i
 		for(pair<int,int> &p: pis.at(i)){ //grab each numerator and do the following
 			for(pair<int,int> &q: pis.at(i)){
@@ -163,19 +165,8 @@ vector<vector<pair<int,int>>> pi(vector<int> D){
 //		for(pair<int,int> p: v) cerr << "{" << p.first << "," << p.second << "} ";
 //		cerr << endl;
 //	}
-	//at this point all the fractions are reduced as much as possible, so L will be the lcm of all of them
-	//question is, if we have (a*b) and (c*d), is lcm((a*b),(c*d)) the same as lcm(lcm(a,c),lcm(b,d))?
-	//if so, this is good, since we can check L before multiplying out any one denominator, as any given denominator can be very big once fully multiplied out, but if we can go
-	//factor by factor for each one, we will have a much, much easier time
-	//lcm(2*3,6*1) = 6, lcm(lcm(2,6),lcm(3,1)) = lcm(6,3) = 6. Seems promising
-	//IF we can "distribute" lcms like this, then we just update L not with each denominator, but with each iteration of a term in every denominator
-	//eg if we have denoms (abc), (def), and (xyz), we don't have start with L=1 and do L = lcm(L,abc) then L = lcm(L,def) then check L (since abc and def could each be huge and at risk of
-	//overflowing), but rather we start with L=1 and do L = lcm(L,a,d,x), then check L, then L = lcm(L,b,e,y), ... and stop if at any point L is big enough to pass the tests
-	//if L is NOT big enough and we reach the end, does the pass necessarily fail? Could it still work? DO we have to worry abt overflow? Will solve these tomorrow 
-	//NOTE: STL lcm function DOES take more than 2 params	
-	//
 
-	return pis; //FIXME
+	return pis;
 }
 
 long long calc_L(vector<int> D){
@@ -183,6 +174,13 @@ long long calc_L(vector<int> D){
 }
 
 long long calc_sum(vector<int> D){
-
-	return -1; //FIXME
+	const vector<long long> B = pure_betti(D);
+	long long sum = 0;
+	for(long long b: B){
+		if(b < 0 || sum > LLONG_MAX - b){
+			throw overflow_error("calc_sum exceeds signed 64-bit range");
+		}
+		sum += b;
+	}
+	return sum;
 }

@@ -84,7 +84,7 @@ $(BIN_DIR)/find_172: $(OBJ_DIR)/apps/find_172.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ
 $(BIN_DIR)/foo: $(OBJ_DIR)/apps/foo.o | $(BIN_DIR)
 	$(CXX) $^ -o $@
 
-$(BIN_DIR)/boij_soderberg_calculator: $(OBJ_DIR)/apps/boij_soderberg_calculator.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o $(OBJ_DIR)/src/algorithm_helpers.o | $(BIN_DIR)
+$(BIN_DIR)/boij_soderberg_calculator: $(OBJ_DIR)/apps/boij_soderberg_calculator.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/algorithm_helpers.o | $(BIN_DIR)
 	$(CXX) $^ -o $@
 
 $(BIN_DIR)/find_big_ones: $(OBJ_DIR)/apps/find_big_ones.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o $(OBJ_DIR)/src/search_algorithms.o | $(BIN_DIR)

@@ -255,7 +255,7 @@ TestSuiteResult run_is_degen_suite() {
 		{"DG16",{0,1,3,4,6},true}, {"DG17",{0,2,4,5,7},true}, {"DG18",{0,2,5,6,9},true}, {"DG19",{0,3,4,7,8},true}, {"DG20",{0,4,6,9,10},true}
 	};
 
-	TestSuiteResult suite{"is_degen current behavior", {}};
+	TestSuiteResult suite{"Legacy is_degen fixtures", {}};
 	for(const auto& [name, degrees, expected] : cases){
 		suite.cases.push_back(expect_equal(name, is_degen(degrees), expected));
 	}
@@ -263,10 +263,23 @@ TestSuiteResult run_is_degen_suite() {
 }
 
 TestSuiteResult run_calc_sum_suite() {
-	TestSuiteResult suite{"calc_sum current behavior", {}};
+	TestSuiteResult suite{"Pure-Betti total (M2 fixtures)", {}};
 	for(const DegreeExpectation& test_case : degree_cases()){
-		suite.cases.push_back(expect_equal(test_case.name, calc_sum(test_case.degrees), -1LL));
+		long long expected_sum = 0;
+		for(long long value: test_case.expected.pure_betti_values){
+			expected_sum += value;
+		}
+		suite.cases.push_back(expect_equal(
+			test_case.name, calc_sum(test_case.degrees), expected_sum));
 	}
+	bool overflow_detected = false;
+	try{
+		calc_sum({0,847,2078,3809,3918});
+	}catch(const overflow_error&){
+		overflow_detected = true;
+	}
+	suite.cases.push_back(expect_equal(
+		"SUM21-total-overflow", overflow_detected, true));
 	return suite;
 }
 
@@ -284,7 +297,7 @@ TestSuiteResult run_pi_values_suite() {
 }
 
 TestSuiteResult run_pi_factors_suite() {
-	TestSuiteResult suite{"Pi factorization (M2-derived fixtures)", {}};
+	TestSuiteResult suite{"Legacy pi factor display (M2-derived fixtures)", {}};
 	for(const DegreeExpectation& test_case : degree_cases()){
 		suite.cases.push_back(expect_equal(test_case.name, pi(test_case.degrees), test_case.pi_factors));
 	}
@@ -315,7 +328,7 @@ TestSuiteResult run_generation_suite() {
 		{"G20",1,5,6,{ {}, {}, {}, {} }}
 	};
 
-	TestSuiteResult suite{"Generation variants (M2 fixtures)", {}};
+	TestSuiteResult suite{"Supported/legacy generation fixtures", {}};
 	for(const auto& [name, c, d, lowbound, expected] : cases){
 		GenerationResultData actual = {
 			gen_subsets_fast(1, c, d, max(lowbound, 1)),

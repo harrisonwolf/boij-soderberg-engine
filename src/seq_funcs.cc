@@ -247,7 +247,7 @@ vector<long long> pure_betti(vector<int> D){
 		}
 	}
 //	cerr << "Starting pure_betti...\n";
-	int c = D.size(); //our codimension
+	int c = static_cast<int>(D.size()); //number of Betti entries; codimension is c - 1
 	vector<long long> retvec(c);
 //	cerr << "retvec.size(): " << retvec.size() << endl;
 	vector<pair<long long,long long>> pi_vec(c);

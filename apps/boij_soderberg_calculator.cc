@@ -9,7 +9,6 @@
 
 #include "algorithm_helpers.h"
 #include "seq_funcs.h"
-#include "test_funcs.h"
 
 namespace {
 
@@ -94,7 +93,7 @@ std::string shift_term(int degree, long long betti_number) {
 void print_report(const std::vector<int> &degrees) {
 	const std::vector<RationalValue> pi_values = compute_pi_values(degrees);
 	const std::vector<long long> betti_numbers = pure_betti(degrees);
-	const long long L = calc_L(degrees);
+	const long long L = betti_numbers.front();
 	const bool passes_beh = test_BEH(betti_numbers);
 	const bool passes_llbc = test_LLBC(betti_numbers);
 

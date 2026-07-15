@@ -6,7 +6,9 @@ It was built in 2024 for the research behind a co-authored paper, *Arithmetic in
 
 ## Provenance
 
-The ~1,200-line mathematical core — `src/seq_funcs.cc`, `src/test_funcs.cc`, `src/binom.cc` and their headers (`gen_deg_seqs`, `pure_betti`, `test_BEH`, `test_LLBC`, `calc_L`) — is hand-written, no AI, and is cross-validated case-by-case against Macaulay2's own `BoijSoederberg` package (`pureBetti`). The repository was later reorganized and given its test and benchmark harness with the help of an AI coding agent.
+The research-era arithmetic implementation is hand-written, with no AI used in its original development. The supported exact path is deliberately narrower than all of the historical source: `gen_deg_seqs`, `pure_betti`, `test_BEH`, `test_LLBC`, and `gcd_rinse` in `src/seq_funcs.cc`, plus checked binomial arithmetic in `src/binom.cc`. Those operations are exercised against baked Macaulay2 fixtures, and the benchmark studio compares complete result sets against Macaulay2's `BoijSoederberg` package (`pureBetti`). The repository was later reorganized and given its test and benchmark harness with the help of an AI coding agent.
+
+`src/test_funcs.cc` is a mixed research-support module, not all part of that supported core. Its `calc_L`, `calc_sum`, `test_conjs_v2`, and diagnostic adapter delegate to the exact Betti path. Its alternate generator, degeneracy heuristic, and factor-pair `pi(...)` display remain development/experimental helpers. The public calculator does not call those experimental helpers: it derives its Betti vector, `L`, rational `pi_i` values, and conjecture results from `pure_betti` and the supported checks.
 
 ## What This Repo Does
 
