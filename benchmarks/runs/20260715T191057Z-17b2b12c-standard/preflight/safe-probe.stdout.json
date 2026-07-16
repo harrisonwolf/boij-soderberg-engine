@@ -1,1 +1,0 @@
-{"schema_version":1,"status":"ok","build":{"commit":"17b2b12c6c56f37a165fd93354112db3064ae555","branch":"agent/boij-benchmark-studio","dirty":false,"profile":"benchmark-release","compiler_command":"g++","compiler_version":"g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0","compiler_flags":"-O2 -Wall -Wextra -std=c++17"},"probe_sequence":[0,2,7,8],"pure_betti":[15,28,48,35]}

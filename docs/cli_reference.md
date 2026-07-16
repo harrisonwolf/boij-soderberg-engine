@@ -89,7 +89,7 @@ Usage:
 test_program
 ```
 
-Interactive driver for development and testing of internal routines. `gen_deg_seqs_v2`, `is_degen`, and the factor-pair `pi` display are legacy/experimental helpers; they are not used by the supported calculator or benchmark path. `test_conjs_v2` and `calc_L` delegate to the exact `pure_betti` path.
+Interactive driver for development and testing of internal routines, including `gen_deg_seqs`, `pure_betti`, `test_conjs_v2`, `gen_deg_seqs_v2`, `is_degen`, `pi`, and `calc_L`.
 
 ### `find_big_ones`
 

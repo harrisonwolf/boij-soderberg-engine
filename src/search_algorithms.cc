@@ -2,25 +2,14 @@
 
 #include "seq_funcs.h"
 #include "test_funcs.h"
-#include <stdexcept>
-#include <string>
 
 using namespace std;
 
 vector<vector<int>> find_bad_degree_sequences(int c, int d, int lowbound) {
-	if(c < 2 || c > BOIJ_MAX_SUPPORTED_CODIMENSION){
-		throw invalid_argument(
-			"find_bad_degree_sequences supports codimension [2,"
-			+ to_string(BOIJ_MAX_SUPPORTED_CODIMENSION) + "]");
-	}
-	if(d < c){
-		throw invalid_argument("max degree must be at least the codimension");
-	}
 	vector<vector<int>> bad_ones;
 	vector<vector<int>> possibles = gen_deg_seqs(c, d, lowbound);
 	for(const vector<int>& curr_test_seq : possibles){
-		const vector<long long> betti = pure_betti(curr_test_seq);
-		if(!test_BEH(betti) || !test_LLBC(betti)){
+		if(!test_conjs(curr_test_seq)){
 			bad_ones.push_back(curr_test_seq);
 		}
 	}

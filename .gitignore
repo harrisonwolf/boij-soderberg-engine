@@ -2,10 +2,6 @@
 /build/
 /dist/
 
-# Python tool caches
-__pycache__/
-*.py[cod]
-
 # C/C++ compilation artifacts
 *.o
 *.obj
@@ -23,10 +19,6 @@ __pycache__/
 \#*\#
 .\#*
 *.swp
-# Local incomplete/quarantined benchmark diagnostics
-/benchmarks/runs/.staging-*/
-/benchmarks/runs/quarantine/
-
 *.swo
 
 # OS junk

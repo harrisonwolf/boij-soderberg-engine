@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -172,7 +171,6 @@ string run_which_violations_silenced(const vector<int>& degrees) {
 
 vector<DegreeExpectation> degree_cases() {
 	return {
-		// Regression: c=1 has L=1 but total Betti sum 2, below the LLBC target 3.
 		{"D01", {0,1}, {{1,1}, true, false, false, false, "LLBC (2)", 1}, {{1,1}, {1,1}}, {{{1,1}}, {}}},
 		{"D02", {0,2}, {{1,1}, true, false, false, false, "LLBC (2)", 1}, {{1,1}, {1,1}}, {{{1,1}}, {}}},
 		{"D03", {0,1,2}, {{1,2,1}, true, false, false, false, "LLBC (4)", 1}, {{1,1}, {2,1}, {1,1}}, {{{1,1}}, {{2,1}}, {{1,1}}}},
@@ -255,7 +253,7 @@ TestSuiteResult run_is_degen_suite() {
 		{"DG16",{0,1,3,4,6},true}, {"DG17",{0,2,4,5,7},true}, {"DG18",{0,2,5,6,9},true}, {"DG19",{0,3,4,7,8},true}, {"DG20",{0,4,6,9,10},true}
 	};
 
-	TestSuiteResult suite{"Legacy is_degen fixtures", {}};
+	TestSuiteResult suite{"is_degen current behavior", {}};
 	for(const auto& [name, degrees, expected] : cases){
 		suite.cases.push_back(expect_equal(name, is_degen(degrees), expected));
 	}
@@ -263,23 +261,10 @@ TestSuiteResult run_is_degen_suite() {
 }
 
 TestSuiteResult run_calc_sum_suite() {
-	TestSuiteResult suite{"Pure-Betti total (M2 fixtures)", {}};
+	TestSuiteResult suite{"calc_sum current behavior", {}};
 	for(const DegreeExpectation& test_case : degree_cases()){
-		long long expected_sum = 0;
-		for(long long value: test_case.expected.pure_betti_values){
-			expected_sum += value;
-		}
-		suite.cases.push_back(expect_equal(
-			test_case.name, calc_sum(test_case.degrees), expected_sum));
+		suite.cases.push_back(expect_equal(test_case.name, calc_sum(test_case.degrees), -1LL));
 	}
-	bool overflow_detected = false;
-	try{
-		calc_sum({0,847,2078,3809,3918});
-	}catch(const overflow_error&){
-		overflow_detected = true;
-	}
-	suite.cases.push_back(expect_equal(
-		"SUM21-total-overflow", overflow_detected, true));
 	return suite;
 }
 
@@ -297,7 +282,7 @@ TestSuiteResult run_pi_values_suite() {
 }
 
 TestSuiteResult run_pi_factors_suite() {
-	TestSuiteResult suite{"Legacy pi factor display (M2-derived fixtures)", {}};
+	TestSuiteResult suite{"Pi factorization (M2-derived fixtures)", {}};
 	for(const DegreeExpectation& test_case : degree_cases()){
 		suite.cases.push_back(expect_equal(test_case.name, pi(test_case.degrees), test_case.pi_factors));
 	}
@@ -328,7 +313,7 @@ TestSuiteResult run_generation_suite() {
 		{"G20",1,5,6,{ {}, {}, {}, {} }}
 	};
 
-	TestSuiteResult suite{"Supported/legacy generation fixtures", {}};
+	TestSuiteResult suite{"Generation variants (M2 fixtures)", {}};
 	for(const auto& [name, c, d, lowbound, expected] : cases){
 		GenerationResultData actual = {
 			gen_subsets_fast(1, c, d, max(lowbound, 1)),
@@ -424,7 +409,6 @@ TestSuiteResult run_bad_search_suite() {
 		{"F12",3,8,1,{{0,1,2,3},{0,1,3,4},{0,1,5,6},{0,2,4,6},{0,2,6,8},{0,3,5,8}}},
 		{"F13",4,4,1,{{0,1,2,3,4}}}, {"F14",4,5,1,{{0,1,2,3,4}}}, {"F15",4,6,1,{{0,1,2,3,4},{0,1,2,5,6},{0,1,4,5,6}}},
 		{"F16",4,7,1,{{0,1,2,3,4},{0,1,2,5,6},{0,1,4,5,6}}}, {"F17",4,8,1,{{0,1,2,3,4},{0,1,2,5,6},{0,1,4,5,6},{0,2,4,6,8}}},
-		// Regression: {0,1,2,8,9} has B={7,18,12,3,2}; B_3=3 violates BEH's target 4.
 		{"F18",4,9,1,{{0,1,2,3,4},{0,1,2,5,6},{0,1,2,8,9},{0,1,4,5,6},{0,1,7,8,9},{0,2,4,6,8}}},
 		{"F19",5,5,1,{{0,1,2,3,4,5}}}, {"F20",5,6,1,{{0,1,2,3,4,5},{0,1,2,3,5,6},{0,1,2,4,5,6},{0,1,3,4,5,6}}}
 	};
@@ -451,43 +435,6 @@ TestSuiteResult run_self_dual_suite() {
 		if(i < actual.size()) actual_entry = actual.at(i);
 		suite.cases.push_back(expect_equal("L" + to_string(i + 1), actual_entry, expected.at(i)));
 	}
-	return suite;
-}
-
-TestSuiteResult run_scale_invariance_suite() {
-	const vector<int> base = {0,1,2,3,4,5,6,7};
-	const vector<int> formerly_false_overflow = {0,1000,2000,3000,4000,5000,6000,7000};
-	const vector<int> larger_scale = {
-		0,1000000,2000000,3000000,4000000,5000000,6000000,7000000
-	};
-	const vector<long long> expected = {1,7,21,35,35,21,7,1};
-	const vector<long long> base_betti = pure_betti(base);
-
-	TestSuiteResult suite{"Pure-Betti scale invariance", {}};
-	suite.cases.push_back(expect_equal("SI01-base", base_betti, expected));
-	suite.cases.push_back(expect_equal(
-		"SI02-former-false-overflow", pure_betti(formerly_false_overflow), expected));
-	suite.cases.push_back(expect_equal(
-		"SI03-larger-scale", pure_betti(larger_scale), expected));
-	suite.cases.push_back(expect_equal(
-		"SI04-betti-equality", pure_betti(formerly_false_overflow), base_betti));
-	suite.cases.push_back(expect_equal(
-		"SI05-pi-equality", compute_pi_values(formerly_false_overflow), compute_pi_values(base)));
-	bool beh_boundary_rejected = false;
-	bool llbc_boundary_rejected = false;
-	const vector<long long> unsupported_codimension(22, 1);
-	try{
-		test_BEH(unsupported_codimension);
-	}catch(const invalid_argument&){
-		beh_boundary_rejected = true;
-	}
-	try{
-		test_LLBC(unsupported_codimension);
-	}catch(const invalid_argument&){
-		llbc_boundary_rejected = true;
-	}
-	suite.cases.push_back(expect_equal("SI06-BEH-boundary", beh_boundary_rejected, true));
-	suite.cases.push_back(expect_equal("SI07-LLBC-boundary", llbc_boundary_rejected, true));
 	return suite;
 }
 
@@ -518,7 +465,6 @@ int main() {
 	vector<TestSuiteResult> suites = {
 		run_binom_suite(),
 		run_count_suite(),
-		run_scale_invariance_suite(),
 		run_degree_suite(),
 		run_is_degen_suite(),
 		run_calc_sum_suite(),

@@ -19,13 +19,11 @@ std::vector<std::vector<int>> gen_deg_seqs_v2(int c, int d, int lowbound = 1);
 //returns a string with with i values where B_i < binom(c,i) and if LLBC failed
 std::string which_violations(std::vector<int> D);
 
-//Legacy development display: returns cross-cancelled factor pairs for each pi_i.
-//Production callers use pure_betti() or compute_pi_values() instead.
+//returns pi(D) as a vector of pairs of ints for each fraction (a complete fraction pi_i is the prod. of all the little fractions that compose it)
 std::vector<std::vector<std::pair<int,int>>> pi(std::vector<int> D);
 
 long long calc_L(std::vector<int> D);
 
-//Returns the checked sum of the exact pure Betti vector.
 long long calc_sum(std::vector<int> D);
 
 #endif

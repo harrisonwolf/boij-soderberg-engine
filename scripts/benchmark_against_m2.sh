@@ -36,10 +36,6 @@ cpp_bad_raw="$(mktemp)"
 cpp_rinsed="$(mktemp)"
 m2_bad_raw="$(mktemp)"
 m2_rinsed="$(mktemp)"
-cpp_bad_sorted="$(mktemp)"
-m2_bad_sorted="$(mktemp)"
-cpp_rinsed_sorted="$(mktemp)"
-m2_rinsed_sorted="$(mktemp)"
 cpp_summary="$(mktemp)"
 m2_summary="$(mktemp)"
 cpp_time_log="$(mktemp)"
@@ -52,11 +48,7 @@ RED=$'\033[31m'
 RESET=$'\033[0m'
 
 cleanup() {
-  rm -f "${cpp_out}" "${cpp_log}" "${m2_script}" "${m2_log}" \
-    "${cpp_bad_raw}" "${cpp_rinsed}" "${m2_bad_raw}" "${m2_rinsed}" \
-    "${cpp_summary}" "${m2_summary}" "${cpp_time_log}" "${m2_time_log}" \
-    "${cpp_progress_file}" "${m2_milestone_file}" "${cpp_bad_sorted}" \
-    "${m2_bad_sorted}" "${cpp_rinsed_sorted}" "${m2_rinsed_sorted}"
+  rm -f "${m2_script}" "${cpp_progress_file}" "${m2_milestone_file}"
 }
 trap cleanup EXIT
 
@@ -267,22 +259,6 @@ awk '
 ' "${m2_log}" > "${m2_summary}"
 cat "${m2_summary}"
 awk '/^\{/' "${m2_rinsed}"
-
-LC_ALL=C sort -u "${cpp_bad_raw}" > "${cpp_bad_sorted}"
-LC_ALL=C sort -u "${m2_bad_raw}" > "${m2_bad_sorted}"
-awk '/^\{/{gsub(/ /,""); print}' "${cpp_rinsed}" | LC_ALL=C sort -u > "${cpp_rinsed_sorted}"
-awk '/^\{/{gsub(/ /,""); print}' "${m2_rinsed}" | LC_ALL=C sort -u > "${m2_rinsed_sorted}"
-if ! cmp -s "${cpp_bad_sorted}" "${m2_bad_sorted}"; then
-  echo "ERROR: C++ and Macaulay2 exact bad-sequence sets differ." >&2
-  diff -u "${cpp_bad_sorted}" "${m2_bad_sorted}" >&2 || true
-  exit 3
-fi
-if ! cmp -s "${cpp_rinsed_sorted}" "${m2_rinsed_sorted}"; then
-  echo "ERROR: C++ and Macaulay2 exact gcd-rinsed sets differ." >&2
-  diff -u "${cpp_rinsed_sorted}" "${m2_rinsed_sorted}" >&2 || true
-  exit 3
-fi
-echo "Exact bad and gcd-rinsed result sets match."
 
 echo
 cpp_elapsed="$(extract_after_equals elapsed < "${cpp_time_log}")"

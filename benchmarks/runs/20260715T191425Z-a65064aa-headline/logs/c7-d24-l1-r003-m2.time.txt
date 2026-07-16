@@ -1,5 +1,0 @@
-elapsed_seconds=46.62
-user_seconds=83.25
-system_seconds=1.87
-max_rss_kb=199128
-exit_code=0

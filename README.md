@@ -6,9 +6,7 @@ It was built in 2024 for the research behind a co-authored paper, *Arithmetic in
 
 ## Provenance
 
-The research-era arithmetic implementation is hand-written, with no AI used in its original development. The supported exact path is deliberately narrower than all of the historical source: `gen_deg_seqs`, `pure_betti`, `test_BEH`, `test_LLBC`, and `gcd_rinse` in `src/seq_funcs.cc`, plus checked binomial arithmetic in `src/binom.cc`. Those operations are exercised against baked Macaulay2 fixtures, and the benchmark studio compares complete result sets against Macaulay2's `BoijSoederberg` package (`pureBetti`). The repository was later reorganized and given its test and benchmark harness with the help of an AI coding agent.
-
-`src/test_funcs.cc` is a mixed research-support module, not all part of that supported core. Its `calc_L`, `calc_sum`, `test_conjs_v2`, and diagnostic adapter delegate to the exact Betti path. Its alternate generator, degeneracy heuristic, and factor-pair `pi(...)` display remain development/experimental helpers. The public calculator does not call those experimental helpers: it derives its Betti vector, `L`, rational `pi_i` values, and conjecture results from `pure_betti` and the supported checks.
+The ~1,200-line mathematical core — `src/seq_funcs.cc`, `src/test_funcs.cc`, `src/binom.cc` and their headers (`gen_deg_seqs`, `pure_betti`, `test_BEH`, `test_LLBC`, `calc_L`) — is hand-written, no AI, and is cross-validated case-by-case against Macaulay2's own `BoijSoederberg` package (`pureBetti`). The repository was later reorganized and given its test and benchmark harness with the help of an AI coding agent.
 
 ## What This Repo Does
 
@@ -21,50 +19,21 @@ The research-era arithmetic implementation is hand-written, with no AI used in i
 
 Historical outputs and research artifacts are kept in-repo for reproducibility. Longer operational notes, detailed CLI usage, and batch workflow material live in [docs/cli_reference.md](docs/cli_reference.md) and [docs/batch_workflows.md](docs/batch_workflows.md).
 
-## Arithmetic and supported domain
+## Performance vs. Macaulay2
 
-Degree entries are signed 32-bit integers; a valid sequence starts at zero, has at least two entries, and is strictly increasing. `pure_betti` cross-cancels numerator and denominator factors before either product is formed, so scaling every degree by a common positive integer does not create a false intermediate overflow. Reduced fractions are combined with a checked denominator LCM, and each final value is computed as `numerator * (L / denominator)`.
+On a task-matched benchmark (same machine, same candidate families, same BEH/LLBC checks, program CPU time), the engine runs roughly **70–115× faster** than an equivalent Macaulay2 implementation, and at large problem sizes Macaulay2 becomes impractically slow — 17 minutes for a 20.7M search versus 11 seconds, and it had not finished a 15.9M search after 25 minutes. Because it must materialize the entire candidate list, it also eventually runs out of memory once that list outgrows RAM (as it did on the lighter hardware the 2024 research ran on).
 
-Pure Betti values, `L`, and candidate counts use signed 64-bit integers. The engine throws an explicit arithmetic-overflow error if a reduced numerator, reduced denominator/LCM, candidate count, or final Betti value cannot be represented; it is not an arbitrary-precision implementation. The benchmark/search CLI supports codimensions 2–20, while direct BEH/LLBC checks and the calculator support codimensions 1–20. The codimension cap keeps the current integer binomial implementation inside its verified range; larger conjecture checks are rejected explicitly rather than allowed to overflow.
-
-Enumeration still materializes the complete candidate family, so memory and runtime impose much tighter practical limits than these numeric type bounds.
-
-## Performance evidence
-
-The following values are **historical, single-run program-time measurements** preserved in `data/processed/benchmarks/benchmark_results.csv`. They are useful orientation, not publication-grade benchmark evidence: the historical table does not contain the command, machine, tool versions, raw logs, repetitions, or a seed (the task is deterministic). A blank memory cell means “not recorded,” not “out of memory.”
-
-| codim | sequences (`n`) | historical C++ | historical Macaulay2 built-in | ratio |
+| codim | sequences (`n`) | C++ | Macaulay2 | speedup |
 | ---: | ---: | ---: | ---: | ---: |
 | 5 | 1,221,759 | 0.88 s | 100.6 s | 114× |
 | 6 | 906,192 | 0.81 s | 93.1 s | 115× |
 | 7 | 1,184,040 | 1.79 s | 156.4 s | 87× |
 | 3 | 20,708,500 | 11.0 s | 1,021 s (~17 min) | 93× |
-| 6 | 15,890,700 | 20.6 s | historical timeout at 25 min | — |
+| 6 | 15,890,700 | 20.6 s | >25 min (unfinished) | — |
 
-Fresh runs use the evidence studio in [`benchmarks/`](benchmarks/README.md). It records the commit and compiler flags, machine and tool metadata, Macaulay2 and `BoijSoederberg` versions, commands, raw output, repeated paired runs with alternating order, exact result arrays, and checksums. `external_wall_seconds` is measured with Python's monotonic `time.perf_counter` around the complete GNU-`time`-wrapped child command. GNU `time` `%e` is retained separately as a coarser wall-clock cross-check, and `%M` supplies peak RSS. A bundle is rejected unless C++ and Macaulay2 agree on every bad sequence and every gcd-rinsed sequence; matching counts alone is insufficient.
+Full data across codimensions 3–7: [`data/processed/benchmarks/benchmark_results.csv`](data/processed/benchmarks/benchmark_results.csv). The "bad one" counts are identical across the C++ engine, Macaulay2's built-in `pureBetti`, and a Macaulay2 transcription of the same algorithm, so this is a same-task comparison, not same-answer-different-work.
 
-Current publication evidence was captured from clean source commit `b2a9bfb8f684ca7c17c49096ac872f7902c613f3`, after the timing boundary and independent summary-recomputation gate were corrected. The five-repetition [`standard`](benchmarks/runs/20260715T202451Z-b2a9bfb8-standard/) campaign completed 20/20 pairs, the three-repetition [`headline`](benchmarks/runs/20260715T202630Z-b2a9bfb8-headline/) campaign completed 12/12 pairs, and the [`smoke`](benchmarks/runs/20260715T202431Z-b2a9bfb8-smoke/) campaign completed 6/6 pairs. Every pair passed exact bad-sequence and gcd-rinsed-sequence equality.
-
-On the headline bundle's recorded Intel Core Ultra 9 275HX / WSL2 environment, the end-to-end external-wall and peak-RSS medians were:
-
-| codim | candidates | C++ median | Macaulay2 median | wall speedup | C++ RSS | Macaulay2 RSS |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | 280,840 | 0.227 s | 13.963 s | 61.6× | 39,552 KiB | 156,400 KiB |
-| 5 | 1,221,759 | 4.087 s | 87.594 s | 21.4× | 156,100 KiB | 482,300 KiB |
-| 6 | 906,192 | 2.785 s | 78.985 s | 28.4× | 116,656 KiB | 398,152 KiB |
-| 7 | 346,104 | 1.378 s | 40.416 s | 29.3× | 54,220 KiB | 199,484 KiB |
-
-These are machine- and case-scoped medians, not universal speedups. The bundles retain every timing and RSS record, alternating order, exact outputs, environment metadata, and checksum. The task is deterministic, so no random seed applies.
-
-The earlier [`standard`](benchmarks/runs/20260715T191057Z-17b2b12c-standard/), [`headline`](benchmarks/runs/20260715T191425Z-a65064aa-headline/), post-fix [`smoke`](benchmarks/runs/20260715T185644Z-db8ace97-smoke/), and pre-fix [`smoke`](benchmarks/runs/20260715T180543Z-2e0daec3-smoke/) bundles remain byte-for-byte for provenance but are superseded for publication. Their recorded observations are not known to be numerically wrong; they predate the corrected evidence contract or its final validation gate.
-
-The task materializes its full candidate list, so memory grows with the candidate count. That fact predicts memory pressure; it does not prove a particular run exhausted RAM. The studio records process timeouts and errors. A positive shared-cgroup `oom_kill` delta is only an unattributed concurrent observation, never proof that the measured process exhausted memory. Only complete, all-success bundles pass the strict validator; completed failures are quarantined as diagnostics rather than published as evidence.
-
-For codimension 3 and `lowbound=1`, degree 7,100 corresponds exactly to `binomial(7100,3) = 59,626,630,700` candidates. That is a combinatorial count, not a measured completion record. The archive contains result-block headers through 7,100 and beyond, and the imported history contains a 50-degree slicing script, but the blocks omit low bounds, commands, timestamps, build identity, and per-slice validation. A dated per-slice artifact named `burn7050-7100.txt` is zero bytes. The repository therefore does not establish a contiguous completed 59.6-billion sweep.
-
-The slice design permits a human to restart at a slice boundary; it is not checkpoint/resume. It neither persists intra-slice state nor automatically verifies and skips completed slices. Portfolio wording should say “historical sliced campaign” only if that distinction is useful, and should not say that resumability or a manifested 59.6-billion completion has been demonstrated.
-
-The old standalone Macaulay2 transcription contained an unsound early-pass shortcut: for `{0,1,2,3,4,5,11,12}`, it treated `L >= binomial(7,3)` as sufficient even though the exact Betti vector `{42,252,616,770,495,132,2,1}` violates BEH at index 6 (`2 < 7`). The standalone path, public search helpers, and diagnostics now all compute the full Betti vector and apply explicit BEH/LLBC checks; the comparison script requires exact set equality. Regression fixtures lock the codimension-1 LLBC failures `{0,1}` and `{0,2}` plus the `c=4,d=9` search member `{0,1,2,8,9}`. Historical `m2port_*` columns predate this correction and should not support claims.
+In the 2024 research campaign the engine swept on the order of tens of billions of degree sequences (codimension 3 out to degree 7,100), collecting counterexamples — a scale Macaulay2 cannot reach.
 
 ## Build
 

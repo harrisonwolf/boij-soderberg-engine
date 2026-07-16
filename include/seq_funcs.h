@@ -5,9 +5,6 @@
 #include <iostream>
 #include <vector>
 
-// Conjecture/search interfaces are verified and supported through codimension 20.
-inline constexpr int BOIJ_MAX_SUPPORTED_CODIMENSION = 20;
-
 void die();
 
 //nicely make a sequence of integers into a string

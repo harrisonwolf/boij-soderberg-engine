@@ -1,46 +1,25 @@
 CXX ?= g++
-CXXFLAGS ?= -O2 -Wall -Wextra -std=c++17
+CXXFLAGS ?= -O2 -Wall -Wextra
 CPPFLAGS ?= -Iinclude
-CXX_VERSION_LINE := $(shell $(CXX) --version 2>/dev/null | sed -n '1p')
-GIT_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || printf unknown)
-GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || printf unknown)
-GIT_DIRTY := $(shell if [ -n "$$(git status --porcelain --untracked-files=all 2>/dev/null)" ]; then printf 1; else printf 0; fi)
-BENCHMARK_BUILD_CPPFLAGS := \
-	-DBOIJ_BUILD_COMMIT=\"$(GIT_COMMIT)\" \
-	-DBOIJ_BUILD_BRANCH=\"$(GIT_BRANCH)\" \
-	-DBOIJ_BUILD_DIRTY=$(GIT_DIRTY) \
-	-DBOIJ_BUILD_PROFILE=\"benchmark-release\" \
-	'-DBOIJ_BUILD_COMPILER_COMMAND="$(CXX)"' \
-	'-DBOIJ_BUILD_COMPILER_VERSION="$(CXX_VERSION_LINE)"' \
-	'-DBOIJ_BUILD_COMPILER_FLAGS="$(CXXFLAGS)"'
 
 BUILD_DIR := build
 OBJ_DIR := $(BUILD_DIR)/obj
 BIN_DIR := $(BUILD_DIR)/bin
 
-DEFAULT_BINS := bad_one_generator parse_huge_output remove_duplicates test_program tell_which_violations find_big_ones boij_soderberg_calculator algorithm_test_driver benchmark_driver
+DEFAULT_BINS := bad_one_generator parse_huge_output remove_duplicates test_program tell_which_violations find_big_ones boij_soderberg_calculator algorithm_test_driver
 EXTRA_BINS := L_finder quick_run find_172 foo
 
-.PHONY: all clean $(DEFAULT_BINS) $(EXTRA_BINS) benchmark-smoke benchmark-standard \
-	benchmark-headline benchmark-validate benchmark-tools-test FORCE
+.PHONY: all clean $(DEFAULT_BINS) $(EXTRA_BINS)
 
 all: $(DEFAULT_BINS)
 
-$(BIN_DIR) $(OBJ_DIR)/apps $(OBJ_DIR)/src $(OBJ_DIR)/benchmark:
+$(BIN_DIR) $(OBJ_DIR)/apps $(OBJ_DIR)/src:
 	mkdir -p $@
 
 $(OBJ_DIR)/apps/%.o: apps/%.cc | $(OBJ_DIR)/apps
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/src/%.o: src/%.cc | $(OBJ_DIR)/src
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
-
-FORCE:
-
-$(OBJ_DIR)/benchmark/benchmark_driver.o: apps/benchmark_driver.cc FORCE | $(OBJ_DIR)/benchmark
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(BENCHMARK_BUILD_CPPFLAGS) -c apps/benchmark_driver.cc -o $@
-
-$(OBJ_DIR)/benchmark/%.o: src/%.cc FORCE | $(OBJ_DIR)/benchmark
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 bad_one_generator: $(BIN_DIR)/bad_one_generator
@@ -55,7 +34,6 @@ find_172: $(BIN_DIR)/find_172
 foo: $(BIN_DIR)/foo
 boij_soderberg_calculator: $(BIN_DIR)/boij_soderberg_calculator
 algorithm_test_driver: $(BIN_DIR)/algorithm_test_driver
-benchmark_driver: $(BIN_DIR)/benchmark_driver
 
 $(BIN_DIR)/bad_one_generator: $(OBJ_DIR)/apps/bad_one_generator.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/algorithm_helpers.o | $(BIN_DIR)
 	$(CXX) $^ -o $@
@@ -84,7 +62,7 @@ $(BIN_DIR)/find_172: $(OBJ_DIR)/apps/find_172.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ
 $(BIN_DIR)/foo: $(OBJ_DIR)/apps/foo.o | $(BIN_DIR)
 	$(CXX) $^ -o $@
 
-$(BIN_DIR)/boij_soderberg_calculator: $(OBJ_DIR)/apps/boij_soderberg_calculator.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/algorithm_helpers.o | $(BIN_DIR)
+$(BIN_DIR)/boij_soderberg_calculator: $(OBJ_DIR)/apps/boij_soderberg_calculator.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o $(OBJ_DIR)/src/algorithm_helpers.o | $(BIN_DIR)
 	$(CXX) $^ -o $@
 
 $(BIN_DIR)/find_big_ones: $(OBJ_DIR)/apps/find_big_ones.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o $(OBJ_DIR)/src/search_algorithms.o | $(BIN_DIR)
@@ -92,27 +70,6 @@ $(BIN_DIR)/find_big_ones: $(OBJ_DIR)/apps/find_big_ones.o $(OBJ_DIR)/src/seq_fun
 
 $(BIN_DIR)/algorithm_test_driver: $(OBJ_DIR)/apps/algorithm_test_driver.o $(OBJ_DIR)/src/seq_funcs.o $(OBJ_DIR)/src/binom.o $(OBJ_DIR)/src/test_funcs.o $(OBJ_DIR)/src/algorithm_helpers.o $(OBJ_DIR)/src/search_algorithms.o $(OBJ_DIR)/src/test_harness.o | $(BIN_DIR)
 	$(CXX) $^ -o $@
-
-$(BIN_DIR)/benchmark_driver: $(OBJ_DIR)/benchmark/benchmark_driver.o $(OBJ_DIR)/benchmark/seq_funcs.o $(OBJ_DIR)/benchmark/binom.o $(OBJ_DIR)/benchmark/algorithm_helpers.o | $(BIN_DIR)
-	$(CXX) $^ -o $@
-
-benchmark-smoke: benchmark-tools-test
-	python3 benchmarks/run_benchmarks.py --profile=smoke --binary=$(BIN_DIR)/benchmark_driver --compiler=$(CXX) --compiler-flags='$(CXXFLAGS)'
-
-benchmark-standard: benchmark-tools-test
-	python3 benchmarks/run_benchmarks.py --profile=standard --binary=$(BIN_DIR)/benchmark_driver --compiler=$(CXX) --compiler-flags='$(CXXFLAGS)'
-
-benchmark-headline: benchmark-tools-test
-	python3 benchmarks/run_benchmarks.py --profile=headline --binary=$(BIN_DIR)/benchmark_driver --compiler=$(CXX) --compiler-flags='$(CXXFLAGS)'
-
-benchmark-validate:
-	@test -n "$(BUNDLE)" || (echo "Usage: make benchmark-validate BUNDLE=benchmarks/runs/<run-id>" >&2; exit 2)
-	python3 benchmarks/validate_bundle.py $(BUNDLE)
-
-benchmark-tools-test: $(BIN_DIR)/benchmark_driver $(BIN_DIR)/algorithm_test_driver
-	$(BIN_DIR)/algorithm_test_driver
-	python3 -m unittest discover -s benchmarks -p 'test_*.py'
-
 
 clean:
 	rm -rf $(BUILD_DIR)

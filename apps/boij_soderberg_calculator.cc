@@ -9,6 +9,7 @@
 
 #include "algorithm_helpers.h"
 #include "seq_funcs.h"
+#include "test_funcs.h"
 
 namespace {
 
@@ -52,11 +53,6 @@ bool parse_degree_sequence(const std::string &line, std::vector<int> &degrees, s
 		error = "A degree sequence must contain at least two entries and start with 0.";
 		return false;
 	}
-	if (degrees.size() - 1 > static_cast<size_t>(BOIJ_MAX_SUPPORTED_CODIMENSION)) {
-		error = "Conjecture checks support codimension at most "
-			+ std::to_string(BOIJ_MAX_SUPPORTED_CODIMENSION) + ".";
-		return false;
-	}
 
 	if (degrees.front() != 0) {
 		error = "A degree sequence must start with 0.";
@@ -93,7 +89,7 @@ std::string shift_term(int degree, long long betti_number) {
 void print_report(const std::vector<int> &degrees) {
 	const std::vector<RationalValue> pi_values = compute_pi_values(degrees);
 	const std::vector<long long> betti_numbers = pure_betti(degrees);
-	const long long L = betti_numbers.front();
+	const long long L = calc_L(degrees);
 	const bool passes_beh = test_BEH(betti_numbers);
 	const bool passes_llbc = test_LLBC(betti_numbers);
 
